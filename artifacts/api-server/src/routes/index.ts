@@ -4,6 +4,7 @@ import chatRouter from "./chat";
 import authRouter from "./auth";
 import subscriptionRouter from "./subscription";
 import creditsRouter from "./credits";
+import activityRouter from "./activity";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(chatRouter);
 router.use(authRouter);
 router.use(subscriptionRouter);
 router.use(creditsRouter);
+router.use(activityRouter);
 
 export default router;

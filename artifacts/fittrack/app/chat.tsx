@@ -25,6 +25,7 @@ import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { useActivity } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 import RewardedAdModal from "@/components/RewardedAdModal";
 
@@ -197,6 +198,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
   const { useCredit, user, rewardAd, adStatus } = useAuth();
+  const { logActivity, getAIContext } = useActivity();
   const [showAdModal, setShowAdModal] = useState(false);
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -387,7 +389,7 @@ export default function ChatScreen() {
       const response = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, language: langCode }),
+        body: JSON.stringify({ messages: newMessages, language: langCode, activityContext: getAIContext() }),
       });
       if (!response.ok || !response.body) throw new Error("Request failed");
 
@@ -430,6 +432,7 @@ export default function ChatScreen() {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }, []);
 
+  useEffect(() => { logActivity("chat", "AI Friend"); }, []);
   useEffect(() => { scrollToBottom(); }, [messages, streamText]);
 
   async function sendMessage(userText?: string) {
@@ -490,7 +493,7 @@ export default function ChatScreen() {
       const response = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages, language: langCode }),
+        body: JSON.stringify({ messages: newMessages, language: langCode, activityContext: getAIContext() }),
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

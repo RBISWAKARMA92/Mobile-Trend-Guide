@@ -132,8 +132,8 @@ export type Translations = {
 
 export const translations: Record<string, Translations> = {
   en: {
-    appName: "Daily Tools",
-    tagline: "Everything you need, every day",
+    appName: "ZenSpace",
+    tagline: "Your calm companion, every day",
     tools: "Tools",
     language: "Language",
     selectLanguage: "Select Language",
@@ -212,7 +212,7 @@ export const translations: Record<string, Translations> = {
     aiPlaceholder: "Ask me anything...",
   },
   es: {
-    appName: "Herramientas",
+    appName: "ZenSpace",
     tagline: "Todo lo que necesitas, cada día",
     tools: "Herramientas",
     language: "Idioma",
@@ -274,7 +274,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Monto de propina",
   },
   fr: {
-    appName: "Outils",
+    appName: "ZenSpace",
     tagline: "Tout ce dont vous avez besoin",
     tools: "Outils",
     language: "Langue",
@@ -336,7 +336,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Montant du pourboire",
   },
   de: {
-    appName: "Werkzeuge",
+    appName: "ZenSpace",
     tagline: "Alles was du täglich brauchst",
     tools: "Werkzeuge",
     language: "Sprache",
@@ -398,7 +398,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Trinkgeldbetrag",
   },
   it: {
-    appName: "Strumenti",
+    appName: "ZenSpace",
     tagline: "Tutto ciò di cui hai bisogno ogni giorno",
     tools: "Strumenti",
     language: "Lingua",
@@ -460,7 +460,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Importo mancia",
   },
   pt: {
-    appName: "Ferramentas",
+    appName: "ZenSpace",
     tagline: "Tudo que você precisa todo dia",
     tools: "Ferramentas",
     language: "Idioma",
@@ -522,7 +522,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Valor da gorjeta",
   },
   nl: {
-    appName: "Tools",
+    appName: "ZenSpace",
     tagline: "Alles wat je elke dag nodig hebt",
     tools: "Tools",
     language: "Taal",
@@ -584,7 +584,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Fooi bedrag",
   },
   ru: {
-    appName: "Инструменты",
+    appName: "ZenSpace",
     tagline: "Всё необходимое каждый день",
     tools: "Инструменты",
     language: "Язык",
@@ -646,7 +646,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Сумма чаевых",
   },
   tr: {
-    appName: "Araçlar",
+    appName: "ZenSpace",
     tagline: "Her gün ihtiyacınız olan her şey",
     tools: "Araçlar",
     language: "Dil",
@@ -708,7 +708,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "Bahşiş tutarı",
   },
   ar: {
-    appName: "الأدوات",
+    appName: "ZenSpace",
     tagline: "كل ما تحتاجه كل يوم",
     tools: "الأدوات",
     language: "اللغة",
@@ -770,7 +770,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "مبلغ البقشيش",
   },
   hi: {
-    appName: "टूल्स",
+    appName: "ZenSpace",
     tagline: "हर दिन जरूरी हर चीज़",
     tools: "टूल्स",
     language: "भाषा",
@@ -832,7 +832,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "टिप राशि",
   },
   zh: {
-    appName: "每日工具",
+    appName: "ZenSpace",
     tagline: "每天所需的一切",
     tools: "工具",
     language: "语言",
@@ -894,7 +894,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "小费金额",
   },
   ja: {
-    appName: "ツール",
+    appName: "ZenSpace",
     tagline: "毎日必要なすべてのもの",
     tools: "ツール",
     language: "言語",
@@ -956,7 +956,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "チップ金額",
   },
   ko: {
-    appName: "도구",
+    appName: "ZenSpace",
     tagline: "매일 필요한 모든 것",
     tools: "도구",
     language: "언어",
@@ -1018,7 +1018,7 @@ export const translations: Record<string, Translations> = {
     tipResult: "팁 금액",
   },
   sw: {
-    appName: "Zana",
+    appName: "ZenSpace",
     tagline: "Kila unachohitaji kila siku",
     tools: "Zana",
     language: "Lugha",
@@ -1081,7 +1081,7 @@ export const translations: Record<string, Translations> = {
   },
 
   hi: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "हर दिन काम आने वाले औज़ार",
     tools: "टूल्स",
     language: "भाषा",
@@ -1163,7 +1163,7 @@ export const translations: Record<string, Translations> = {
   },
 
   bn: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "প্রতিদিনের সহায়ক সরঞ্জাম",
     tools: "টুলস",
     language: "ভাষা",
@@ -1227,7 +1227,7 @@ export const translations: Record<string, Translations> = {
   },
 
   te: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "రోజువారీ ఉపయోగకరమైన సాధనాలు",
     tools: "టూల్స్",
     language: "భాష",
@@ -1291,7 +1291,7 @@ export const translations: Record<string, Translations> = {
   },
 
   mr: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "दैनंदिन जीवनातील उपयुक्त साधने",
     tools: "साधने",
     language: "भाषा",
@@ -1355,7 +1355,7 @@ export const translations: Record<string, Translations> = {
   },
 
   ta: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "தினசரி பயனுள்ள கருவிகள்",
     tools: "கருவிகள்",
     language: "மொழி",
@@ -1419,7 +1419,7 @@ export const translations: Record<string, Translations> = {
   },
 
   ur: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "روزمرہ کی زندگی کے مفید اوزار",
     tools: "ٹولز",
     language: "زبان",
@@ -1483,7 +1483,7 @@ export const translations: Record<string, Translations> = {
   },
 
   gu: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "દૈનિક જીવનના ઉપયોગી સાધનો",
     tools: "સાધનો",
     language: "ભાષા",
@@ -1547,7 +1547,7 @@ export const translations: Record<string, Translations> = {
   },
 
   kn: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "ದೈನಂದಿನ ಜೀವನದ ಉಪಯುಕ್ತ ಸಾಧನಗಳು",
     tools: "ಸಾಧನಗಳು",
     language: "ಭಾಷೆ",
@@ -1611,7 +1611,7 @@ export const translations: Record<string, Translations> = {
   },
 
   ml: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "ദൈനംദിന ജീവിതത്തിലെ ഉപകരണങ്ങൾ",
     tools: "ഉപകരണങ്ങൾ",
     language: "ഭാഷ",
@@ -1675,7 +1675,7 @@ export const translations: Record<string, Translations> = {
   },
 
   pa: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "ਰੋਜ਼ਾਨਾ ਜ਼ਿੰਦਗੀ ਦੇ ਉਪਯੋਗੀ ਸੰਦ",
     tools: "ਸੰਦ",
     language: "ਭਾਸ਼ਾ",
@@ -1739,7 +1739,7 @@ export const translations: Record<string, Translations> = {
   },
 
   or: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "ଦୈନନ୍ଦିନ ଜୀବନର ଉପକାରୀ ଉପକରଣ",
     tools: "ଉପକରଣ",
     language: "ଭାଷା",
@@ -1803,7 +1803,7 @@ export const translations: Record<string, Translations> = {
   },
 
   as: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "দৈনন্দিন জীৱনৰ উপযোগী সঁজুলি",
     tools: "সঁজুলি",
     language: "ভাষা",
@@ -1867,7 +1867,7 @@ export const translations: Record<string, Translations> = {
   },
 
   mai: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "दैनिक जीवनक उपयोगी औजार",
     tools: "औजार",
     language: "भाषा",
@@ -1931,7 +1931,7 @@ export const translations: Record<string, Translations> = {
   },
 
   ne: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "दैनिक जीवनका उपयोगी उपकरणहरू",
     tools: "उपकरणहरू",
     language: "भाषा",
@@ -1995,7 +1995,7 @@ export const translations: Record<string, Translations> = {
   },
 
   kok: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "दीसपट्टीं वापरपाचीं उपकरणां",
     tools: "उपकरणां",
     language: "भाशा",
@@ -2059,7 +2059,7 @@ export const translations: Record<string, Translations> = {
   },
 
   sd: {
-    appName: "Daily Tools",
+    appName: "ZenSpace",
     tagline: "روزاني زندگيءَ جا مددگار اوزار",
     tools: "اوزار",
     language: "ٻولي",

@@ -16,6 +16,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ActivityProvider } from "@/context/ActivityContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -96,6 +97,7 @@ function RootLayoutNav() {
       <Stack.Screen name="music" options={{ headerShown: false }} />
       <Stack.Screen name="reminders" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
+      <Stack.Screen name="chant-counter" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -121,13 +123,15 @@ export default function RootLayout() {
       <ErrorBoundary>
         <LanguageProvider>
           <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <GestureHandlerRootView>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
-              </GestureHandlerRootView>
-            </QueryClientProvider>
+            <ActivityProvider>
+              <QueryClientProvider client={queryClient}>
+                <GestureHandlerRootView>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                  </KeyboardProvider>
+                </GestureHandlerRootView>
+              </QueryClientProvider>
+            </ActivityProvider>
           </AuthProvider>
         </LanguageProvider>
       </ErrorBoundary>
