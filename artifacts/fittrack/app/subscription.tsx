@@ -1,9 +1,11 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -11,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
@@ -25,7 +28,58 @@ type Plan = {
   features: string[];
   color: string;
   popular: boolean;
+  price: number;
 };
+
+type RazorpayOrder = {
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+  planId: string;
+  planName: string;
+};
+
+function buildRazorpayHTML(order: RazorpayOrder, phone: string) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body style="background:#000;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+<script>
+var options = {
+  key: "${order.keyId}",
+  amount: "${order.amount}",
+  currency: "${order.currency}",
+  name: "Daily Tools",
+  description: "${order.planName} Plan – Monthly Subscription",
+  order_id: "${order.orderId}",
+  prefill: { contact: "${phone}" },
+  theme: { color: "#6366f1" },
+  handler: function(response) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: "PAYMENT_SUCCESS",
+      razorpay_order_id: response.razorpay_order_id,
+      razorpay_payment_id: response.razorpay_payment_id,
+      razorpay_signature: response.razorpay_signature,
+      planId: "${order.planId}"
+    }));
+  }
+};
+var rzp = new Razorpay(options);
+rzp.on("payment.failed", function(response) {
+  window.ReactNativeWebView.postMessage(JSON.stringify({
+    type: "PAYMENT_FAILED",
+    error: response.error.description
+  }));
+});
+rzp.open();
+</script>
+</body>
+</html>`;
+}
 
 export default function SubscriptionScreen() {
   const colors = useColors();
@@ -39,10 +93,10 @@ export default function SubscriptionScreen() {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [razorpayOrder, setRazorpayOrder] = useState<RazorpayOrder | null>(null);
+  const [showWebView, setShowWebView] = useState(false);
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  useEffect(() => { fetchPlans(); }, []);
 
   async function fetchPlans() {
     try {
@@ -53,31 +107,124 @@ export default function SubscriptionScreen() {
     setLoading(false);
   }
 
-  async function activatePlan(planId: string) {
+  async function handleFreePlan() {
     if (!token) { router.push("/login"); return; }
-    setActivating(planId);
+    setActivating("free");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const res = await fetch(`${BASE_URL}/subscription/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ planId: "free" }),
+      });
+      if (res.ok) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await refreshUser();
+        setSuccess("free");
+        setTimeout(() => router.replace("/"), 1500);
+      }
+    } catch {}
+    setActivating(null);
+  }
+
+  async function handlePaidPlan(planId: string) {
+    if (!token) { router.push("/login"); return; }
+    if (Platform.OS === "web") {
+      Alert.alert("Payment", "Razorpay payment works in the Expo Go app on your phone. On web it simulates activation.");
+      setActivating(planId);
+      const res = await fetch(`${BASE_URL}/subscription/activate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ planId }),
+      });
+      if (res.ok) {
+        await refreshUser();
+        setSuccess(planId);
+        setTimeout(() => router.replace("/"), 1800);
+      }
+      setActivating(null);
+      return;
+    }
+    setActivating(planId);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const res = await fetch(`${BASE_URL}/subscription/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ planId }),
       });
       const data = await res.json();
       if (res.ok) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await refreshUser();
-        setSuccess(planId);
-        setTimeout(() => { router.replace("/"); }, 2000);
+        setRazorpayOrder(data);
+        setShowWebView(true);
+      } else {
+        Alert.alert("Error", data.error ?? "Failed to initiate payment");
+      }
+    } catch {
+      Alert.alert("Error", "Network error. Please try again.");
+    }
+    setActivating(null);
+  }
+
+  async function handleWebViewMessage(event: any) {
+    try {
+      const msg = JSON.parse(event.nativeEvent.data);
+      if (msg.type === "PAYMENT_SUCCESS") {
+        setShowWebView(false);
+        setActivating(msg.planId);
+        const res = await fetch(`${BASE_URL}/subscription/verify-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            razorpay_order_id: msg.razorpay_order_id,
+            razorpay_payment_id: msg.razorpay_payment_id,
+            razorpay_signature: msg.razorpay_signature,
+            planId: msg.planId,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          await refreshUser();
+          setSuccess(msg.planId);
+          setTimeout(() => router.replace("/"), 1800);
+        } else {
+          Alert.alert("Verification Failed", data.error ?? "Payment could not be verified");
+        }
+        setActivating(null);
+      } else if (msg.type === "PAYMENT_FAILED") {
+        setShowWebView(false);
+        Alert.alert("Payment Failed", msg.error ?? "Payment was not completed");
       }
     } catch {}
-    setActivating(null);
   }
 
   const currentPlan = subscription?.plan ?? "free";
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* Razorpay WebView Modal */}
+      <Modal visible={showWebView} animationType="slide" onRequestClose={() => setShowWebView(false)}>
+        <View style={styles.webViewContainer}>
+          <View style={[styles.webViewHeader, { backgroundColor: colors.card, paddingTop: insets.top + 8 }]}>
+            <Pressable onPress={() => setShowWebView(false)} style={styles.closeBtn}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </Pressable>
+            <Text style={[styles.webViewTitle, { color: colors.foreground }]}>Secure Payment</Text>
+            <View style={{ width: 36 }} />
+          </View>
+          {razorpayOrder && (
+            <WebView
+              source={{ html: buildRazorpayHTML(razorpayOrder, user?.phone ?? "") }}
+              onMessage={handleWebViewMessage}
+              javaScriptEnabled
+              domStorageEnabled
+              style={{ flex: 1 }}
+            />
+          )}
+        </View>
+      </Modal>
+
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
           <Feather name="x" size={22} color={colors.foreground} />
@@ -107,7 +254,7 @@ export default function SubscriptionScreen() {
 
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Choose Your Plan</Text>
         <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-          Upgrade to unlock more AI chat messages every month
+          Upgrade for more AI chat messages every month
         </Text>
 
         {loading ? (
@@ -160,7 +307,10 @@ export default function SubscriptionScreen() {
                 </View>
 
                 <Pressable
-                  onPress={() => activatePlan(plan.id)}
+                  onPress={() => {
+                    if (plan.price === 0) handleFreePlan();
+                    else handlePaidPlan(plan.id);
+                  }}
                   disabled={isActive || !!activating || !!success}
                   style={({ pressed }) => [
                     styles.planBtn,
@@ -178,9 +328,12 @@ export default function SubscriptionScreen() {
                       <Text style={styles.planBtnText}>{isSuccess ? "Activated!" : "Current Plan"}</Text>
                     </>
                   ) : (
-                    <Text style={styles.planBtnText}>
-                      {plan.id === "free" ? "Start Free" : `Subscribe — ${plan.priceLabel}`}
-                    </Text>
+                    <>
+                      {plan.price > 0 && <Ionicons name="card-outline" size={17} color="#fff" />}
+                      <Text style={styles.planBtnText}>
+                        {plan.price === 0 ? "Start Free" : `Pay ${plan.priceLabel}`}
+                      </Text>
+                    </>
                   )}
                 </Pressable>
               </View>
@@ -188,9 +341,12 @@ export default function SubscriptionScreen() {
           })
         )}
 
-        <Text style={[styles.note, { color: colors.mutedForeground }]}>
-          * This is a demo. In production, payment would be processed via Razorpay or UPI.
-        </Text>
+        <View style={[styles.secureRow, { borderColor: colors.border }]}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.mutedForeground} />
+          <Text style={[styles.secureText, { color: colors.mutedForeground }]}>
+            Payments secured by Razorpay · UPI, Cards, NetBanking supported
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -198,6 +354,13 @@ export default function SubscriptionScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  webViewContainer: { flex: 1 },
+  webViewHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingBottom: 12,
+  },
+  closeBtn: { padding: 6 },
+  webViewTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingHorizontal: 16, paddingBottom: 12, gap: 12,
@@ -229,5 +392,9 @@ const styles = StyleSheet.create({
   featureText: { fontSize: 13, fontFamily: "Inter_400Regular" },
   planBtn: { height: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   planBtnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
-  note: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center" },
+  secureRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    borderWidth: 1, borderRadius: 12, padding: 12,
+  },
+  secureText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
 });
