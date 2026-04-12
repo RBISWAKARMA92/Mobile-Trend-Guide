@@ -445,6 +445,15 @@ export default function HomeScreen() {
             <BannerAdView />
           </View>
         )}
+
+        {/* Footer links */}
+        <View style={styles.footerRow}>
+          <Pressable onPress={() => router.push("/privacy")} hitSlop={8}>
+            <Text style={[styles.footerLink, { color: colors.mutedForeground }]}>Privacy Policy</Text>
+          </Pressable>
+          <Text style={[styles.footerDot, { color: colors.mutedForeground }]}>·</Text>
+          <Text style={[styles.footerLink, { color: colors.mutedForeground }]}>© 2026 ZenSpace</Text>
+        </View>
       </ScrollView>
 
       <RewardedAdModal
@@ -593,4 +602,9 @@ const styles = StyleSheet.create({
 
   // Banner ad
   bannerWrap: { alignItems: "center", marginTop: 4 },
+
+  // Footer
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 20 },
+  footerLink: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  footerDot: { fontSize: 14, fontFamily: "Inter_400Regular" },
 });
