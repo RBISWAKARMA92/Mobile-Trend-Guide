@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "com.zenspace.dailytools",
-      "versionCode": 10,
+      "versionCode": 12,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#09090b"
@@ -86,15 +86,6 @@
         {
           "microphonePermission": "ZenSpace needs microphone access to speak with AI.",
           "speechRecognitionPermission": "ZenSpace needs speech recognition to convert your voice to text."
-        }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "android_app_id": "ca-app-pub-6765256613517786~4007752719",
-          "ios_app_id": "ca-app-pub-6765256613517786~7482960680",
-          "delay_app_measurement_init": true,
-          "user_tracking_usage_description": "This identifier will be used to deliver personalised ads to you."
         }
       ]
     ],
