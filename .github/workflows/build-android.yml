@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android AAB (Play Store)
 
 on:
   workflow_dispatch:
@@ -48,22 +48,30 @@ jobs:
           EXPO_PUBLIC_DOMAIN: placeholder
         run: npx expo prebuild --platform android --clean
 
+      - name: Decode signing keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > /tmp/zenspace-release.jks
+
       - name: Make Gradle executable
         working-directory: artifacts/fittrack/android
         run: chmod +x gradlew
 
-      - name: Build Debug APK
+      - name: Build Release AAB (signed)
         working-directory: artifacts/fittrack/android
         run: |
-          ./gradlew assembleDebug \
+          ./gradlew bundleRelease \
             -PreactNativeArchitectures=arm64-v8a \
             --no-daemon \
-            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m" \
+            -Pandroid.injected.signing.store.file=/tmp/zenspace-release.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload AAB to GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: ZenSpace-v12-debug-arm64
-          path: artifacts/fittrack/android/app/build/outputs/apk/debug/app-debug.apk
+          name: ZenSpace-v12-release-AAB
+          path: artifacts/fittrack/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
           if-no-files-found: error
