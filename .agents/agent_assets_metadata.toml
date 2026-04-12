@@ -24,6 +24,24 @@ uri = "file://attached_assets/generated_images/zenspace_screenshot_bg.png"
 type = "image"
 title = "zenspace screenshot background"
 
+[[generated]]
+id = "Q5QVhzTQUcUDG51Bi8e8c"
+uri = "file://artifacts/zenspace-web/public/hero-mockup.png"
+type = "image"
+title = "Tranquil hero app mockup"
+
+[[generated]]
+id = "dRRZ5EDKcUauVahp8R8aP"
+uri = "file://artifacts/zenspace-web/public/feature-ai.png"
+type = "image"
+title = "AI Chat Feature"
+
+[[generated]]
+id = "y6paX3Glpp6u0GB2eQg26"
+uri = "file://artifacts/zenspace-web/public/feature-tools.png"
+type = "image"
+title = "Mala Counter Feature"
+
 [[outputs]]
 id = "xwx6jQsi7eGWliLTETcM4"
 uri = "file://attached_assets/generated_images/zenspace_feature_graphic.png"
