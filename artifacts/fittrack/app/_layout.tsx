@@ -17,6 +17,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ActivityProvider } from "@/context/ActivityContext";
+import { usePreloadInterstitial } from "@/components/InterstitialAdManager";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +28,7 @@ const AUTH_SCREENS = ["login", "otp-verify"];
 function RootLayoutNav() {
   const { t } = useLanguage();
   const { token, isLoading } = useAuth();
+  usePreloadInterstitial(); // pre-load interstitial ad on startup
   const router = useRouter();
   const segments = useSegments();
 

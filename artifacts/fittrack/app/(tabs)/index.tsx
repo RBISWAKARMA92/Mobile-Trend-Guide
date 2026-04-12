@@ -18,6 +18,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useActivity } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 import RewardedAdModal from "@/components/RewardedAdModal";
+import BannerAdView from "@/components/BannerAdView";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { getComedyLine } from "@/constants/comedyLines";
 import { getTodayAffirmation, moodAffirmations } from "@/constants/affirmations";
 
@@ -267,7 +269,11 @@ export default function HomeScreen() {
           {FEATURED.map((f) => (
             <Pressable
               key={f.id}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(f.route as any); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                trackToolOpen(subscription?.plan === "pro");
+                router.push(f.route as any);
+              }}
               style={({ pressed }) => [styles.featCard, { opacity: pressed ? 0.85 : 1 }]}
             >
               <LinearGradient colors={f.colors} style={styles.featGrad}>
@@ -285,7 +291,11 @@ export default function HomeScreen() {
           {tools.map((tool) => (
             <Pressable
               key={tool.id}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(tool.route as any); }}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                trackToolOpen(subscription?.plan === "pro");
+                router.push(tool.route as any);
+              }}
               style={({ pressed }) => [styles.toolCell, { opacity: pressed ? 0.7 : 1 }]}
             >
               <View style={[styles.toolIconBox, { backgroundColor: tool.bg }]}>
@@ -330,6 +340,27 @@ export default function HomeScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Upgrade nudge for free/guest users */}
+        {(!user || subscription?.plan === "free" || !subscription) && (
+          <Pressable
+            onPress={() => router.push("/subscription")}
+            style={[styles.upgradeNudge, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}
+          >
+            <Ionicons name="flash" size={18} color={colors.primary} />
+            <Text style={[styles.upgradeText, { color: colors.primary }]}>
+              ⚡ Go Premium — Remove ads & get unlimited AI credits from ₹49/month
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+          </Pressable>
+        )}
+
+        {/* AdMob Banner — shown to non-pro users only */}
+        {subscription?.plan !== "pro" && (
+          <View style={styles.bannerWrap}>
+            <BannerAdView />
+          </View>
+        )}
       </ScrollView>
 
       <RewardedAdModal
@@ -444,4 +475,14 @@ const styles = StyleSheet.create({
   },
   wellnessTitle: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   wellnessSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+
+  // Upgrade nudge
+  upgradeNudge: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    padding: 14, borderRadius: 16, borderWidth: 1,
+  },
+  upgradeText: { flex: 1, fontSize: 12, fontFamily: "Inter_600SemiBold", lineHeight: 17 },
+
+  // Banner ad
+  bannerWrap: { alignItems: "center", marginTop: 4 },
 });

@@ -59,7 +59,7 @@ var options = {
   key: "${order.keyId}",
   amount: "${order.amount}",
   currency: "${order.currency}",
-  name: "Daily Tools",
+  name: "ZenSpace",
   description: "${order.planName} – ${order.priceLabel}",
   order_id: "${order.orderId}",
   prefill: { contact: "${phone}" },
@@ -246,6 +246,30 @@ export default function SubscriptionScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Revenue hero */}
+        <View style={[styles.heroCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+          <Text style={styles.heroEmoji}>⚡</Text>
+          <Text style={[styles.heroTitle, { color: colors.foreground }]}>
+            Unlock the Full ZenSpace Experience
+          </Text>
+          <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
+            Free plan shows ads and limits AI credits. Go Premium to remove all ads, get hundreds of AI credits, and support ZenSpace's mission.
+          </Text>
+          <View style={styles.heroBenefits}>
+            {[
+              { icon: "ban-outline", label: "No ads — ever", color: "#ef4444" },
+              { icon: "sparkles", label: "500–6000 AI credits", color: "#6366f1" },
+              { icon: "heart", label: "Support wellness for all", color: "#ec4899" },
+              { icon: "shield-checkmark", label: "Secure Razorpay payment", color: "#22c55e" },
+            ].map((b) => (
+              <View key={b.label} style={styles.heroBenefit}>
+                <Ionicons name={b.icon as any} size={16} color={b.color} />
+                <Text style={[styles.heroBenefitText, { color: colors.mutedForeground }]}>{b.label}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
         {/* Credits status banner */}
         {user && (
           <View style={[styles.creditsBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
@@ -442,6 +466,17 @@ export default function SubscriptionScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  // Hero section
+  heroCard: {
+    borderRadius: 20, borderWidth: 1, padding: 20, gap: 8,
+  },
+  heroEmoji: { fontSize: 36, textAlign: "center" },
+  heroTitle: { fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
+  heroSub: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 19 },
+  heroBenefits: { gap: 8, marginTop: 4 },
+  heroBenefit: { flexDirection: "row", alignItems: "center", gap: 10 },
+  heroBenefitText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+
   webViewContainer: { flex: 1 },
   webViewHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
