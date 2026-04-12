@@ -18,14 +18,15 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "ZenSpace needs camera access to scan QR codes.",
-        "NSMicrophoneUsageDescription": "ZenSpace needs microphone access for AI voice chat.",
+        "NSMicrophoneUsageDescription": "ZenSpace needs microphone access to speak with AI.",
         "NSPhotoLibraryUsageDescription": "ZenSpace needs photo library access to save images.",
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalised ads to you."
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalised ads to you.",
+        "NSSpeechRecognitionUsageDescription": "ZenSpace needs speech recognition to convert your voice to text."
       }
     },
     "android": {
       "package": "com.zenspace.dailytools",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#09090b"
@@ -37,7 +38,16 @@
         "WRITE_EXTERNAL_STORAGE",
         "INTERNET",
         "ACCESS_NETWORK_STATE",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
       ]
     },
     "web": {
@@ -91,6 +101,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6895b5e6-2e76-4b9c-9c50-afae84887d03"
+      }
+    },
+    "owner": "rupashree91"
   }
 }
