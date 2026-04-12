@@ -30,6 +30,10 @@ type SpotifyTrack = {
   id: string; name: string; artists: string; album: string;
   image: string | null; preview_url: string | null; spotify_url: string | null; duration_ms: number;
 };
+type YTVideo = {
+  id: string; title: string; channel: string;
+  thumbnail: string | null; youtube_url: string; ytmusic_url: string;
+};
 
 const STATIONS: Station[] = [
   { id: "bollywood", name: "Bollywood Hits", genre: "Hindi", url: "https://streaming.radio.co/s3a7a9c1af/listen", emoji: "🎵", color: "#f59e0b" },
@@ -49,7 +53,7 @@ const MUSIC_APPS: AppLink[] = [
   { id: "wynk", name: "Wynk Music", url: "https://wynk.in/music", emoji: "🎵", color: "#6C00D5" },
 ];
 
-const TABS = ["Spotify", "Phone", "Radio", "Apps"] as const;
+const TABS = ["Spotify", "YouTube", "Phone", "Radio", "Apps"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MusicScreen() {
@@ -77,6 +81,12 @@ export default function MusicScreen() {
   const [spotifyLoading, setSpotifyLoading] = useState(false);
   const [spotifyError, setSpotifyError] = useState<string | null>(null);
 
+  // YouTube state
+  const [ytQuery, setYtQuery] = useState("");
+  const [ytResults, setYtResults] = useState<YTVideo[]>([]);
+  const [ytLoading, setYtLoading] = useState(false);
+  const [ytError, setYtError] = useState<string | null>(null);
+
   useEffect(() => {
     Audio.setAudioModeAsync({ staysActiveInBackground: true, playsInSilentModeIOS: true });
     return () => { stopSound(); };
@@ -96,9 +106,8 @@ export default function MusicScreen() {
 
   // Load featured Spotify tracks when tab opens
   useEffect(() => {
-    if (tab === "Spotify" && spotifyResults.length === 0) {
-      fetchFeatured();
-    }
+    if (tab === "Spotify" && spotifyResults.length === 0) fetchFeatured();
+    if (tab === "YouTube" && ytResults.length === 0) fetchYTTrending();
   }, [tab]);
 
   async function fetchFeatured() {
@@ -129,6 +138,37 @@ export default function MusicScreen() {
       setSpotifyError("Network error. Check connection.");
     } finally {
       setSpotifyLoading(false);
+    }
+  }
+
+  async function fetchYTTrending() {
+    setYtLoading(true);
+    setYtError(null);
+    try {
+      const r = await fetch(`${API_BASE}/youtube/trending`);
+      const data = await r.json();
+      if (data.videos) setYtResults(data.videos);
+      else setYtError(data.error ?? "Could not load videos");
+    } catch {
+      setYtError("Network error. Check connection.");
+    } finally {
+      setYtLoading(false);
+    }
+  }
+
+  async function searchYouTube(q: string) {
+    if (!q.trim()) { fetchYTTrending(); return; }
+    setYtLoading(true);
+    setYtError(null);
+    try {
+      const r = await fetch(`${API_BASE}/youtube/search?q=${encodeURIComponent(q)}`);
+      const data = await r.json();
+      if (data.videos) setYtResults(data.videos);
+      else setYtError(data.error ?? "No results");
+    } catch {
+      setYtError("Network error. Check connection.");
+    } finally {
+      setYtLoading(false);
     }
   }
 
@@ -300,7 +340,7 @@ export default function MusicScreen() {
             style={[styles.tabBtn, tab === tp && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           >
             <Text style={[styles.tabLabel, { color: tab === tp ? colors.primary : colors.mutedForeground }]}>
-              {tp === "Spotify" ? "🎧 Spotify" : tp === "Phone" ? "📱 My Music" : tp === "Radio" ? "📻 Radio" : "🔗 Apps"}
+              {tp === "Spotify" ? "🎧 Spotify" : tp === "YouTube" ? "▶️ YouTube" : tp === "Phone" ? "📱 My Music" : tp === "Radio" ? "📻 Radio" : "🔗 Apps"}
             </Text>
           </Pressable>
         ))}
@@ -415,6 +455,99 @@ export default function MusicScreen() {
               <View style={styles.spotifyFooter}>
                 <Text style={[styles.spotifyFooterText, { color: colors.mutedForeground }]}>
                   🎧 Powered by Spotify · Tap ▶ for 30-sec preview · Tap ↗ to open full song in Spotify
+                </Text>
+              </View>
+            )}
+          </>
+        )}
+
+        {/* ── YouTube Tab ─────────────────────────────────────────── */}
+        {tab === "YouTube" && (
+          <>
+            <View style={[styles.spotifySearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="search" size={18} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.spotifyInput, { color: colors.foreground }]}
+                placeholder="Search music videos…"
+                placeholderTextColor={colors.mutedForeground}
+                value={ytQuery}
+                onChangeText={setYtQuery}
+                onSubmitEditing={() => searchYouTube(ytQuery)}
+                returnKeyType="search"
+              />
+              {ytQuery.length > 0 && (
+                <Pressable onPress={() => { setYtQuery(""); fetchYTTrending(); }} hitSlop={8}>
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              )}
+            </View>
+
+            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+              {ytQuery.trim() ? "SEARCH RESULTS" : "🔥 TRENDING MUSIC IN INDIA"}
+            </Text>
+
+            {ytLoading && (
+              <View style={styles.spotifyCenter}>
+                <Ionicons name="logo-youtube" size={40} color="#FF0000" />
+                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground }]}>Loading…</Text>
+              </View>
+            )}
+
+            {ytError && !ytLoading && (
+              <View style={styles.spotifyCenter}>
+                <Ionicons name="warning-outline" size={36} color="#ef4444" />
+                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground }]}>{ytError}</Text>
+                <Pressable onPress={fetchYTTrending} style={[styles.spotifyRetry, { backgroundColor: "#FF0000" }]}>
+                  <Text style={styles.spotifyRetryText}>Try Again</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {!ytLoading && !ytError && ytResults.map((video) => (
+              <View
+                key={video.id}
+                style={[styles.ytCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                {video.thumbnail ? (
+                  <Image source={{ uri: video.thumbnail }} style={styles.ytThumb} />
+                ) : (
+                  <View style={[styles.ytThumb, { backgroundColor: colors.border, alignItems: "center", justifyContent: "center" }]}>
+                    <Ionicons name="logo-youtube" size={24} color="#FF0000" />
+                  </View>
+                )}
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text style={[styles.ytTitle, { color: colors.foreground }]} numberOfLines={2}>
+                    {video.title}
+                  </Text>
+                  <Text style={[styles.ytChannel, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    {video.channel}
+                  </Text>
+                </View>
+                <View style={{ gap: 8, alignItems: "center" }}>
+                  {/* Open in YouTube */}
+                  <Pressable
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(video.youtube_url); }}
+                    style={[styles.ytBtn, { backgroundColor: "#FF000020" }]}
+                    hitSlop={4}
+                  >
+                    <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+                  </Pressable>
+                  {/* Open in YT Music */}
+                  <Pressable
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(video.ytmusic_url); }}
+                    style={[styles.ytBtn, { backgroundColor: "#FF000020" }]}
+                    hitSlop={4}
+                  >
+                    <Ionicons name="musical-note" size={18} color="#FF0000" />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+
+            {!ytLoading && (
+              <View style={styles.spotifyFooter}>
+                <Text style={[styles.spotifyFooterText, { color: colors.mutedForeground }]}>
+                  ▶️ Powered by YouTube · Tap the YouTube icon to watch · Tap the note to open in YT Music
                 </Text>
               </View>
             )}
@@ -628,4 +761,14 @@ const styles = StyleSheet.create({
   spotifyOpenBtn: { padding: 6 },
   spotifyFooter: { alignItems: "center", paddingTop: 8 },
   spotifyFooterText: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 17 },
+
+  // YouTube styles
+  ytCard: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 16, borderWidth: 1, overflow: "hidden",
+  },
+  ytThumb: { width: 100, height: 68 },
+  ytTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 18 },
+  ytChannel: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  ytBtn: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
 });

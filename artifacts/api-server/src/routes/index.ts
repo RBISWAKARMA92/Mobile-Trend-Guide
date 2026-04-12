@@ -6,6 +6,7 @@ import subscriptionRouter from "./subscription";
 import creditsRouter from "./credits";
 import activityRouter from "./activity";
 import spotifyRouter from "./spotify";
+import youtubeRouter from "./youtube";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(subscriptionRouter);
 router.use(creditsRouter);
 router.use(activityRouter);
 router.use(spotifyRouter);
+router.use(youtubeRouter);
 
 export default router;
