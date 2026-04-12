@@ -14,12 +14,18 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useLanguage } from "@/context/LanguageContext";
 
 type Note = { id: string; text: string; createdAt: string };
 
 export default function NotesScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [notes, setNotes] = useState<Note[]>([]);

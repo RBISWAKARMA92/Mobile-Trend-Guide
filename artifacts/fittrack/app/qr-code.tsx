@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -15,6 +15,8 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 
 const PRESETS = [
   { label: "WiFi", emoji: "📶", template: "WIFI:S:MyNetwork;T:WPA;P:MyPassword;;" },
@@ -30,6 +32,10 @@ const SIZE_LABELS = ["S", "M", "L"];
 
 export default function QRCodeScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;

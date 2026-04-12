@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useLanguage } from "@/context/LanguageContext";
 
 type Category = "length" | "weight" | "temperature" | "volume" | "area" | "speed" | "data" | "energy";
@@ -102,6 +104,10 @@ const CATEGORIES: { id: Category; label: string; emoji: string }[] = [
 
 export default function ConverterScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [category, setCategory] = useState<Category>("length");

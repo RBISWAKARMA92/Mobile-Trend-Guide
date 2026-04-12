@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -94,6 +95,7 @@ export default function HomeScreen() {
   const { todayMood, setMood } = useActivity();
 
   const [showAdModal, setShowAdModal] = useState(false);
+  const [showShareAdModal, setShowShareAdModal] = useState(false);
   const [comedyIdx, setComedyIdx] = useState(() => Math.floor(Math.random() * 7));
   const [moodMsg, setMoodMsg] = useState<string | null>(null);
 
@@ -133,6 +135,20 @@ export default function HomeScreen() {
     { id: "gpt", label: "ChatGPT", url: "https://chatgpt.com", icon: "robot-outline", lib: "MC", color: "#10A37F" },
     { id: "news", label: "News", url: "https://news.google.com", icon: "newspaper-outline", lib: "Ionicons", color: "#f59e0b" },
   ];
+
+  async function handleShareEarn() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const result = await Share.share({
+        message: "🧘 I'm using ZenSpace — a free app with AI chat, meditation, music, tools & more! Try it: https://zenspace.app",
+        title: "Try ZenSpace — Daily Wellness App",
+      });
+      if (result.action === Share.sharedAction) {
+        // Reward the user for sharing
+        if (user) setShowShareAdModal(true);
+      }
+    } catch {}
+  }
 
   function handleMood(val: number) {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -341,6 +357,25 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Share to Earn — visible to all logged-in free users */}
+        {user && subscription?.plan !== "pro" && (
+          <Pressable
+            onPress={handleShareEarn}
+            style={[styles.shareCard, { backgroundColor: "#22c55e12", borderColor: "#22c55e40" }]}
+          >
+            <View style={[styles.shareIconBox, { backgroundColor: "#22c55e" }]}>
+              <Ionicons name="share-social" size={18} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.shareTitle, { color: colors.foreground }]}>Share ZenSpace → Earn +10 Credits</Text>
+              <Text style={[styles.shareSub, { color: colors.mutedForeground }]}>
+                Share with friends and get free AI credits instantly 🎁
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#22c55e" />
+          </Pressable>
+        )}
+
         {/* Upgrade nudge for free/guest users */}
         {(!user || subscription?.plan === "free" || !subscription) && (
           <Pressable
@@ -366,6 +401,12 @@ export default function HomeScreen() {
       <RewardedAdModal
         visible={showAdModal}
         onClose={() => setShowAdModal(false)}
+        onRewarded={async () => { await rewardAd(); }}
+        creditsEarned={10}
+      />
+      <RewardedAdModal
+        visible={showShareAdModal}
+        onClose={() => setShowShareAdModal(false)}
         onRewarded={async () => { await rewardAd(); }}
         creditsEarned={10}
       />
@@ -477,6 +518,14 @@ const styles = StyleSheet.create({
   wellnessSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
 
   // Upgrade nudge
+  shareCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderRadius: 16, borderWidth: 1, padding: 14,
+  },
+  shareIconBox: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  shareTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  shareSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+
   upgradeNudge: {
     flexDirection: "row", alignItems: "center", gap: 8,
     padding: 14, borderRadius: 16, borderWidth: 1,

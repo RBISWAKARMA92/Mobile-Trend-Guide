@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useLanguage } from "@/context/LanguageContext";
 
 const ZODIAC = [
@@ -47,6 +49,10 @@ const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "S
 
 export default function AgeScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [day, setDay] = useState("");

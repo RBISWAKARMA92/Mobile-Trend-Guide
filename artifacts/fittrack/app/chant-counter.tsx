@@ -15,7 +15,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useActivity } from "@/context/ActivityContext";
+import RewardedAdModal from "@/components/RewardedAdModal";
 
 const SESSIONS_KEY = "@zenspace_chant_sessions";
 const GOALS = [7, 11, 21, 33, 54, 108, 500, 1000];
@@ -33,6 +36,11 @@ const MALA_DOTS = 108;
 
 export default function ChantCounterScreen() {
   const colors = useColors();
+  const { subscription, rewardAd } = useAuth();
+  const isPro = subscription?.plan === "pro";
+  const [showRewardAd, setShowRewardAd] = useState(false);
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { logActivity } = useActivity();
@@ -102,6 +110,8 @@ export default function ChantCounterScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       celebrate();
       saveSession(newCount);
+      // Offer rewarded ad to free users after completing a mala
+      if (!isPro) setTimeout(() => setShowRewardAd(true), 1800);
     }
   }
 
@@ -319,6 +329,14 @@ export default function ChantCounterScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Rewarded ad after mala completion */}
+      <RewardedAdModal
+        visible={showRewardAd}
+        onClose={() => setShowRewardAd(false)}
+        onRewarded={async () => { await rewardAd(); }}
+        creditsEarned={10}
+      />
     </View>
   );
 }

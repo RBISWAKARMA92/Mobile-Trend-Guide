@@ -15,6 +15,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 
 type Category = { id: string; label: string; emoji: string; color: string };
 type Expense = { id: string; amount: number; note: string; category: string; date: string };
@@ -51,6 +53,10 @@ function isThisMonth(iso: string) {
 
 export default function ExpenseScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;

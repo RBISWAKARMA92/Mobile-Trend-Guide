@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 
 type TZEntry = {
   city: string;
@@ -82,6 +84,10 @@ function isDayTime(tz: string) {
 
 export default function WorldClockScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;

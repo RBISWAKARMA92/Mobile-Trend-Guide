@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useLanguage } from "@/context/LanguageContext";
 
 const LOWER = "abcdefghijklmnopqrstuvwxyz";
@@ -34,6 +36,10 @@ function generate(len: number, upper: boolean, nums: boolean, syms: boolean) {
 
 export default function PasswordScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [length, setLength] = useState(16);

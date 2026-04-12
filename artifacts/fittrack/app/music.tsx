@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import BannerAdView from "@/components/BannerAdView";
 import RewardedAdModal from "@/components/RewardedAdModal";
 
@@ -72,6 +73,8 @@ export default function MusicScreen() {
   const router = useRouter();
   const { subscription, rewardAd } = useAuth();
   const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 

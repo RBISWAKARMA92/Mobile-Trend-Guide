@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, ScrollView, StyleSheet, Text, TextInput, View, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function BMIScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const [height, setHeight] = useState("");

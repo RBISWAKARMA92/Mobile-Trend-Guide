@@ -16,6 +16,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/context/AuthContext";
+import { trackToolOpen } from "@/components/InterstitialAdManager";
 
 type Recording = {
   id: string;
@@ -42,6 +44,10 @@ function formatDate(iso: string) {
 
 export default function VoiceRecorderScreen() {
   const colors = useColors();
+  const { subscription } = useAuth();
+  const isPro = subscription?.plan === "pro";
+
+  useEffect(() => { trackToolOpen(isPro); }, []);
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const router = useRouter();
