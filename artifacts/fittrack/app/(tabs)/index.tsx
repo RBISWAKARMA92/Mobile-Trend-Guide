@@ -117,6 +117,12 @@ export default function HomeScreen() {
       icon: <Ionicons name="videocam" size={26} color="#fff" />,
       bg: "#0284c7",
     },
+    {
+      id: "kidsZone",
+      route: "/kids-zone",
+      icon: <Text style={{ fontSize: 26 }}>🧒</Text>,
+      bg: "#f43f5e",
+    },
   ];
 
   const toolLabels: Record<string, string> = {
@@ -133,6 +139,7 @@ export default function HomeScreen() {
     voiceRecorder: t.voiceRecorder ?? "Voice Recorder",
     music: t.music ?? "Music",
     videoRecorder: t.videoRecorder ?? "Video Recorder",
+    kidsZone: t.kidsZone ?? "Kids Zone",
   };
 
   const quickLinks: QuickLink[] = [
