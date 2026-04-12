@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
 type Tool = {
@@ -35,6 +36,7 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
+  const { user, subscription } = useAuth();
 
   const tools: Tool[] = [
     {
@@ -176,18 +178,31 @@ export default function HomeScreen() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background }]}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.appName, { color: colors.foreground }]}>{t.appName}</Text>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>{t.tagline}</Text>
         </View>
-        <Pressable
-          onPress={() => router.push("/language")}
-          style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-        >
-          <Text style={[styles.langCode, { color: colors.primary }]}>
-            {langCode.toUpperCase().slice(0, 3)}
-          </Text>
-        </Pressable>
+        <View style={styles.headerRight}>
+          {user && (
+            <Pressable
+              onPress={() => router.push("/subscription")}
+              style={[styles.creditsBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}
+            >
+              <Ionicons name="flash" size={13} color={colors.primary} />
+              <Text style={[styles.creditsCount, { color: colors.primary }]}>
+                {user.credits === 9999 ? "∞" : user.credits}
+              </Text>
+            </Pressable>
+          )}
+          <Pressable
+            onPress={() => router.push("/language")}
+            style={[styles.langBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <Text style={[styles.langCode, { color: colors.primary }]}>
+              {langCode.toUpperCase().slice(0, 3)}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
@@ -267,6 +282,12 @@ const styles = StyleSheet.create({
   },
   appName: { fontSize: 28, fontFamily: "Inter_700Bold", fontWeight: "700" },
   tagline: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  creditsBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 10, paddingVertical: 7, borderRadius: 20, borderWidth: 1,
+  },
+  creditsCount: { fontSize: 13, fontFamily: "Inter_700Bold" },
   langBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   langCode: { fontSize: 13, fontFamily: "Inter_600SemiBold", fontWeight: "600" },
   content: { paddingHorizontal: 16, paddingTop: 4, gap: 10 },

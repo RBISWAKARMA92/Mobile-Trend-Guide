@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -15,13 +15,32 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+const AUTH_SCREENS = ["login", "otp-verify"];
+
 function RootLayoutNav() {
   const { t } = useLanguage();
+  const { token, isLoading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (isLoading) return;
+    const currentSegment = segments[0] as string | undefined;
+    const inAuthScreen = AUTH_SCREENS.includes(currentSegment ?? "");
+
+    if (!token && !inAuthScreen) {
+      router.replace("/login");
+    } else if (token && inAuthScreen) {
+      router.replace("/");
+    }
+  }, [token, isLoading, segments]);
+
   return (
     <Stack
       screenOptions={{
@@ -30,6 +49,9 @@ function RootLayoutNav() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false, animation: "fade" }} />
+      <Stack.Screen name="otp-verify" options={{ headerShown: false }} />
+      <Stack.Screen name="subscription" options={{ headerShown: false }} />
       <Stack.Screen
         name="calculator"
         options={{ headerShown: true, title: t.calculator, headerBackTitle: "" }}
@@ -90,13 +112,15 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <LanguageProvider>
-          <QueryClientProvider client={queryClient}>
-            <GestureHandlerRootView>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
-          </QueryClientProvider>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <GestureHandlerRootView>
+                <KeyboardProvider>
+                  <RootLayoutNav />
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </QueryClientProvider>
+          </AuthProvider>
         </LanguageProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -32,6 +33,7 @@ export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
+  const { useCredit, user, subscription } = useAuth();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -53,6 +55,20 @@ export default function ChatScreen() {
     if (!text || loading) return;
     setInput("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const creditOk = await useCredit();
+    if (!creditOk) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: text },
+        {
+          role: "assistant",
+          content: "⚡ You've used all your free credits! Upgrade your plan to keep chatting with AI.",
+        },
+      ]);
+      setTimeout(() => router.push("/subscription"), 1500);
+      return;
+    }
 
     const userMsg: Message = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
