@@ -59,7 +59,14 @@
         }
       ],
       "expo-av",
-      "expo-media-library"
+      "expo-media-library",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Daily Tools needs microphone access to speak with AI.",
+          "speechRecognitionPermission": "Daily Tools needs speech recognition to convert your voice to text."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

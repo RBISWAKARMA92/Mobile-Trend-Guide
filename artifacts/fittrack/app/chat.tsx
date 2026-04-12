@@ -1,9 +1,16 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Speech from "expo-speech";
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from "expo-speech-recognition";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -33,7 +40,7 @@ export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
-  const { useCredit, user, subscription } = useAuth();
+  const { useCredit, user } = useAuth();
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -43,6 +50,79 @@ export default function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [streamText, setStreamText] = useState("");
   const scrollRef = useRef<ScrollView>(null);
+
+  // Voice input state
+  const [isListening, setIsListening] = useState(false);
+  const [interimText, setInterimText] = useState("");
+  const [speakReplies, setSpeakReplies] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  // Speech recognition events
+  useSpeechRecognitionEvent("start", () => setIsListening(true));
+  useSpeechRecognitionEvent("end", () => {
+    setIsListening(false);
+    setInterimText("");
+  });
+  useSpeechRecognitionEvent("result", (event) => {
+    const transcript = event.results[0]?.transcript ?? "";
+    if (event.isFinal) {
+      setInput((prev) => (prev ? prev + " " + transcript : transcript).trim());
+      setInterimText("");
+    } else {
+      setInterimText(transcript);
+    }
+  });
+  useSpeechRecognitionEvent("error", () => {
+    setIsListening(false);
+    setInterimText("");
+  });
+
+  // Pulse animation while listening
+  useEffect(() => {
+    if (isListening) {
+      pulseLoop.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.35, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      );
+      pulseLoop.current.start();
+    } else {
+      pulseLoop.current?.stop();
+      pulseAnim.setValue(1);
+    }
+    return () => pulseLoop.current?.stop();
+  }, [isListening]);
+
+  async function toggleVoice() {
+    if (Platform.OS === "web") {
+      // Web Speech API fallback
+      if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
+        return;
+      }
+    }
+    if (isListening) {
+      ExpoSpeechRecognitionModule.stop();
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!granted) return;
+      ExpoSpeechRecognitionModule.start({
+        lang: langCode ?? "en-IN",
+        interimResults: true,
+        continuous: false,
+      });
+    } catch {}
+  }
+
+  function speakText(text: string) {
+    if (!speakReplies) return;
+    Speech.stop();
+    Speech.speak(text, { language: langCode ?? "en", rate: 0.95 });
+  }
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
@@ -54,6 +134,8 @@ export default function ChatScreen() {
     const text = (userText ?? input).trim();
     if (!text || loading) return;
     setInput("");
+    setInterimText("");
+    if (isListening) ExpoSpeechRecognitionModule.stop();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const creditOk = await useCredit();
@@ -61,10 +143,7 @@ export default function ChatScreen() {
       setMessages((prev) => [
         ...prev,
         { role: "user", content: text },
-        {
-          role: "assistant",
-          content: "⚡ You've used all your free credits! Upgrade your plan to keep chatting with AI.",
-        },
+        { role: "assistant", content: "⚡ You've used all your free credits! Upgrade your plan to keep chatting with AI." },
       ]);
       setTimeout(() => router.push("/subscription"), 1500);
       return;
@@ -111,9 +190,10 @@ export default function ChatScreen() {
 
       if (fullText) {
         setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
+        speakText(fullText);
       }
       setStreamText("");
-    } catch (err) {
+    } catch {
       const errMsg = "Sorry, something went wrong. Please try again.";
       setMessages((prev) => [...prev, { role: "assistant", content: errMsg }]);
       setStreamText("");
@@ -123,6 +203,7 @@ export default function ChatScreen() {
   }
 
   const isEmpty = messages.length === 0;
+  const showInput = (input || interimText).trim();
 
   return (
     <KeyboardAvoidingView
@@ -130,6 +211,7 @@ export default function ChatScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={0}
     >
+      {/* Header */}
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
@@ -140,11 +222,30 @@ export default function ChatScreen() {
             {t.aiChat ?? "AI Friend"}
           </Text>
         </View>
-        <Pressable onPress={() => setMessages([])} style={styles.clearBtn}>
-          <Feather name="refresh-ccw" size={18} color={colors.mutedForeground} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          {/* Speaker toggle */}
+          <Pressable
+            onPress={() => {
+              setSpeakReplies((v) => !v);
+              if (speakReplies) Speech.stop();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }}
+            style={[styles.headerBtn, { backgroundColor: speakReplies ? colors.primary + "20" : "transparent" }]}
+          >
+            <Ionicons
+              name={speakReplies ? "volume-high" : "volume-mute-outline"}
+              size={18}
+              color={speakReplies ? colors.primary : colors.mutedForeground}
+            />
+          </Pressable>
+          {/* Clear */}
+          <Pressable onPress={() => { setMessages([]); Speech.stop(); }} style={styles.headerBtn}>
+            <Feather name="refresh-ccw" size={18} color={colors.mutedForeground} />
+          </Pressable>
+        </View>
       </View>
 
+      {/* Messages */}
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[styles.chatContent, { paddingBottom: 16 }]}
@@ -160,8 +261,15 @@ export default function ChatScreen() {
               {t.aiWelcomeTitle ?? "Your Smart Friend"}
             </Text>
             <Text style={[styles.welcomeSub, { color: colors.mutedForeground }]}>
-              {t.aiWelcomeSub ?? "Ask me anything — in any language!"}
+              {t.aiWelcomeSub ?? "Ask me anything — type or tap the mic to speak!"}
             </Text>
+            {/* Mic hint */}
+            <View style={[styles.micHint, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="mic" size={16} color={colors.primary} />
+              <Text style={[styles.micHintText, { color: colors.mutedForeground }]}>
+                Tap the mic button to speak your question
+              </Text>
+            </View>
             <View style={styles.suggestions}>
               {SUGGESTIONS_EN.map((s) => (
                 <Pressable
@@ -202,6 +310,15 @@ export default function ChatScreen() {
             >
               {msg.content}
             </Text>
+            {msg.role === "assistant" && (
+              <Pressable
+                onPress={() => speakText(msg.content)}
+                style={styles.speakBtn}
+                hitSlop={8}
+              >
+                <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
+              </Pressable>
+            )}
           </View>
         ))}
 
@@ -219,6 +336,17 @@ export default function ChatScreen() {
         )}
       </ScrollView>
 
+      {/* Interim voice text preview */}
+      {isListening && interimText ? (
+        <View style={[styles.interimBar, { backgroundColor: colors.primary + "15", borderTopColor: colors.primary + "40" }]}>
+          <Ionicons name="mic" size={14} color={colors.primary} />
+          <Text style={[styles.interimText, { color: colors.primary }]} numberOfLines={2}>
+            {interimText}
+          </Text>
+        </View>
+      ) : null}
+
+      {/* Input row */}
       <View
         style={[
           styles.inputRow,
@@ -229,13 +357,34 @@ export default function ChatScreen() {
           },
         ]}
       >
+        {/* Mic button */}
+        <Pressable onPress={toggleVoice} style={styles.micWrapper}>
+          {isListening && (
+            <Animated.View
+              style={[
+                styles.micRipple,
+                { backgroundColor: "#ef4444" + "30", transform: [{ scale: pulseAnim }] },
+              ]}
+            />
+          )}
+          <View
+            style={[
+              styles.micBtn,
+              { backgroundColor: isListening ? "#ef4444" : colors.card, borderColor: isListening ? "#ef4444" : colors.border },
+            ]}
+          >
+            <Ionicons name={isListening ? "stop" : "mic"} size={20} color={isListening ? "#fff" : colors.primary} />
+          </View>
+        </Pressable>
+
+        {/* Text input */}
         <TextInput
           style={[
             styles.input,
-            { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+            { backgroundColor: colors.card, borderColor: isListening ? colors.primary + "60" : colors.border, color: colors.foreground },
           ]}
-          placeholder={t.aiPlaceholder ?? "Ask me anything..."}
-          placeholderTextColor={colors.mutedForeground}
+          placeholder={isListening ? "Listening..." : (t.aiPlaceholder ?? "Ask me anything...")}
+          placeholderTextColor={isListening ? colors.primary : colors.mutedForeground}
           value={input}
           onChangeText={setInput}
           multiline
@@ -243,18 +392,24 @@ export default function ChatScreen() {
           onSubmitEditing={() => sendMessage()}
           blurOnSubmit={false}
         />
+
+        {/* Send button */}
         <Pressable
           onPress={() => sendMessage()}
-          disabled={loading || !input.trim()}
+          disabled={loading || !showInput}
           style={({ pressed }) => [
             styles.sendBtn,
             {
-              backgroundColor: input.trim() && !loading ? colors.primary : colors.border,
+              backgroundColor: showInput && !loading ? colors.primary : colors.border,
               opacity: pressed ? 0.8 : 1,
             },
           ]}
         >
-          <Feather name="send" size={18} color={input.trim() && !loading ? "#fff" : colors.mutedForeground} />
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Feather name="send" size={18} color={showInput && !loading ? "#fff" : colors.mutedForeground} />
+          )}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -272,16 +427,23 @@ const styles = StyleSheet.create({
   headerInfo: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
   aiDot: { width: 8, height: 8, borderRadius: 4 },
   headerTitle: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  clearBtn: { padding: 4 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
+  headerBtn: { padding: 8, borderRadius: 20 },
   chatContent: { padding: 16, gap: 12, flexGrow: 1 },
-  welcome: { alignItems: "center", paddingTop: 40, gap: 12 },
+  welcome: { alignItems: "center", paddingTop: 32, gap: 12 },
   avatarBig: {
     width: 80, height: 80, borderRadius: 40,
     alignItems: "center", justifyContent: "center", marginBottom: 4,
   },
   welcomeTitle: { fontSize: 22, fontFamily: "Inter_700Bold" },
   welcomeSub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
-  suggestions: { flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 8 },
+  micHint: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderRadius: 20, borderWidth: 1, marginTop: 4,
+  },
+  micHintText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  suggestions: { flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 4 },
   suggestion: {
     paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, borderWidth: 1,
@@ -298,10 +460,28 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1,
   },
   bubbleText: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  speakBtn: { marginTop: 4, padding: 2 },
+  interimBar: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10,
+    borderTopWidth: 1,
+  },
+  interimText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", fontStyle: "italic" },
   inputRow: {
     flexDirection: "row", alignItems: "flex-end",
-    paddingHorizontal: 16, paddingTop: 12, gap: 10,
+    paddingHorizontal: 12, paddingTop: 12, gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  micWrapper: {
+    width: 44, height: 44, alignItems: "center", justifyContent: "center",
+  },
+  micRipple: {
+    position: "absolute", width: 44, height: 44, borderRadius: 22,
+  },
+  micBtn: {
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 1.5,
   },
   input: {
     flex: 1, borderWidth: 1, borderRadius: 22,
@@ -310,7 +490,7 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendBtn: {
-    width: 42, height: 42, borderRadius: 21,
+    width: 44, height: 44, borderRadius: 22,
     alignItems: "center", justifyContent: "center",
   },
 });
