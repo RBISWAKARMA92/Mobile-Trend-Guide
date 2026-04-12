@@ -23,27 +23,25 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - name: Install pnpm
+        run: npm install -g pnpm@9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install required Android SDK components
         run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
 
-      - name: Run Expo prebuild (generate native Android project)
+      - name: Run Expo prebuild
         working-directory: artifacts/fittrack
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -54,15 +52,13 @@ jobs:
         working-directory: artifacts/fittrack/android
         run: chmod +x gradlew
 
-      - name: Build Debug APK (arm64-v8a only)
+      - name: Build Debug APK
         working-directory: artifacts/fittrack/android
-        env:
-          GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=512m"
         run: |
           ./gradlew assembleDebug \
             -PreactNativeArchitectures=arm64-v8a \
             --no-daemon \
-            --stacktrace
+            -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=512m"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
