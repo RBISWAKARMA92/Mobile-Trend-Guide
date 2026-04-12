@@ -224,7 +224,7 @@ export default function RemindersScreen() {
             </View>
             <Switch
               value={r.enabled && !isPast(r.dateISO)}
-              onValueChange={() => !isPast(r.dateISO) && toggleReminder(r)}
+              onValueChange={(_v: boolean) => { if (!isPast(r.dateISO)) toggleReminder(r); }}
               trackColor={{ false: colors.border, true: colors.primary + "80" }}
               thumbColor={r.enabled ? colors.primary : colors.mutedForeground}
               disabled={isPast(r.dateISO)}

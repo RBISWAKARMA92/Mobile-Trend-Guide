@@ -129,9 +129,9 @@ export default function AgeScreen() {
           <View style={[styles.result, { backgroundColor: colors.primary }]}>
             <Text style={[styles.resultTitle, { color: "rgba(255,255,255,0.8)" }]}>{t.yourAge}</Text>
             <View style={styles.statRow}>
-              <Stat value={result.years} label={t.years} />
-              <Stat value={result.months} label={t.months} />
-              <Stat value={result.days} label={t.days} />
+              <Stat value={result.years} label={t.years ?? "Years"} />
+              <Stat value={result.months} label={t.months ?? "Months"} />
+              <Stat value={result.days} label={t.days ?? "Days"} />
             </View>
           </View>
 

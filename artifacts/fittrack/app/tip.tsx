@@ -134,7 +134,7 @@ export default function TipScreen() {
         <View style={[styles.divider, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
         <Row label={t.total} value={`${symbol}${total.toFixed(2)}`} light />
         <View style={[styles.divider, { backgroundColor: "rgba(255,255,255,0.2)" }]} />
-        <Row label={t.perPerson} value={`${symbol}${perPerson.toFixed(2)}`} light big />
+        <Row label={t.perPerson ?? "Per Person"} value={`${symbol}${perPerson.toFixed(2)}`} light big />
       </View>
 
       {billVal > 0 && pplVal > 1 && (

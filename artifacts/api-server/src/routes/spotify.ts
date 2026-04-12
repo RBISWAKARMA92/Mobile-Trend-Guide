@@ -41,7 +41,7 @@ function mapTrack(t: any) {
 router.get("/spotify/search", async (req, res) => {
   try {
     const q = (req.query.q as string)?.trim();
-    if (!q) return res.status(400).json({ error: "Query required" });
+    if (!q) { res.status(400).json({ error: "Query required" }); return; }
     const token = await getSpotifyToken();
     const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=20&market=IN`;
     const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });

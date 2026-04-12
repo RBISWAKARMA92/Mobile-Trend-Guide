@@ -51,7 +51,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }
 
   const isRTL = LANGUAGES.find((l) => l.code === langCode)?.rtl ?? false;
-  const t = translations[langCode] ?? translations["en"];
+  const t = { ...translations["en"], ...(translations[langCode] ?? {}) } as Translations;
 
   return (
     <LanguageContext.Provider value={{ langCode, t, setLanguage, isRTL }}>

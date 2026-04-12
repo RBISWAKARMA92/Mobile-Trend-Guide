@@ -57,49 +57,49 @@ export type Translations = {
   reset: string;
   copy: string;
   copied: string;
-  done: string;
+  done?: string;
   result: string;
   from: string;
   to: string;
   start: string;
-  pause: string;
-  resume: string;
-  lap: string;
-  length: string;
-  weight: string;
-  temperature: string;
-  volume: string;
-  bill: string;
+  pause?: string;
+  resume?: string;
+  lap?: string;
+  length?: string;
+  weight?: string;
+  temperature?: string;
+  volume?: string;
+  bill?: string;
   tipPercent: string;
   people: string;
   total: string;
-  perPerson: string;
-  height: string;
-  underweight: string;
-  normal: string;
-  overweight: string;
-  obese: string;
-  birthdate: string;
-  years: string;
-  months: string;
-  days: string;
-  addNote: string;
-  deleteNote: string;
-  noteHint: string;
-  noNotes: string;
-  passwordLength: string;
-  uppercase: string;
-  numbers: string;
-  symbols: string;
-  generate: string;
-  stopwatch: string;
-  countdown: string;
-  hours: string;
-  minutes: string;
-  seconds: string;
-  yourAge: string;
-  bmiResult: string;
-  tipResult: string;
+  perPerson?: string;
+  height?: string;
+  underweight?: string;
+  normal?: string;
+  overweight?: string;
+  obese?: string;
+  birthdate?: string;
+  years?: string;
+  months?: string;
+  days?: string;
+  addNote?: string;
+  deleteNote?: string;
+  noteHint?: string;
+  noNotes?: string;
+  passwordLength?: string;
+  uppercase?: string;
+  numbers?: string;
+  symbols?: string;
+  generate?: string;
+  stopwatch?: string;
+  countdown?: string;
+  hours?: string;
+  minutes?: string;
+  seconds?: string;
+  yourAge?: string;
+  bmiResult?: string;
+  tipResult?: string;
   quickLinks?: string;
   reminders?: string;
   addReminder?: string;
@@ -128,6 +128,12 @@ export type Translations = {
   radioStations?: string;
   videoRecorder?: string;
   cameraWebMsg?: string;
+  clear?: string;
+  convert?: string;
+  stop?: string;
+  set?: string;
+  billAmount?: string;
+  kidsZone?: string;
 };
 
 export const translations: Record<string, Translations> = {
@@ -1080,88 +1086,6 @@ export const translations: Record<string, Translations> = {
     tipResult: "Kiasi cha malipo",
   },
 
-  hi: {
-    appName: "ZenSpace",
-    tagline: "हर दिन काम आने वाले औज़ार",
-    tools: "टूल्स",
-    language: "भाषा",
-    selectLanguage: "भाषा चुनें",
-    calculator: "कैलकुलेटर",
-    converter: "कन्वर्टर",
-    timer: "टाइमर",
-    notes: "नोट्स",
-    tipCalculator: "टिप कैलकुलेटर",
-    bmi: "BMI",
-    ageCalculator: "उम्र कैलकुलेटर",
-    passwordGenerator: "पासवर्ड जेनरेटर",
-    calculate: "गणना करें",
-    result: "परिणाम",
-    clear: "साफ़ करें",
-    copy: "कॉपी करें",
-    copied: "कॉपी हो गया!",
-    from: "से",
-    to: "तक",
-    convert: "बदलें",
-    length: "लंबाई",
-    weight: "वजन",
-    temperature: "तापमान",
-    volume: "आयतन",
-    start: "शुरू",
-    stop: "रोकें",
-    reset: "रिसेट",
-    lap: "लैप",
-    set: "सेट",
-    addNote: "नोट जोड़ें...",
-    deleteNote: "मिटाएं",
-    noteHint: "कुछ लिखें...",
-    noNotes: "कोई नोट नहीं। + दबाकर जोड़ें।",
-    billAmount: "बिल राशि",
-    tipPercent: "टिप %",
-    people: "लोग",
-    total: "कुल",
-    perPerson: "प्रति व्यक्ति",
-    height: "ऊंचाई (सेमी)",
-    underweight: "कम वजन",
-    normal: "सामान्य",
-    overweight: "अधिक वजन",
-    obese: "मोटापा",
-    birthdate: "जन्म तिथि",
-    years: "साल",
-    months: "महीने",
-    days: "दिन",
-    passwordLength: "लंबाई",
-    uppercase: "बड़े अक्षर",
-    numbers: "संख्याएं",
-    symbols: "प्रतीक",
-    generate: "बनाएं",
-    stopwatch: "स्टॉपवॉच",
-    countdown: "काउंटडाउन",
-    hours: "घंटे",
-    minutes: "मिनट",
-    seconds: "सेकंड",
-    yourAge: "आपकी उम्र",
-    bmiResult: "आपका BMI",
-    tipResult: "टिप राशि",
-    quickLinks: "त्वरित लिंक",
-    reminders: "रिमाइंडर",
-    addReminder: "रिमाइंडर जोड़ें",
-    reminderTitle: "शीर्षक",
-    reminderTime: "तारीख और समय",
-    setReminder: "रिमाइंडर सेट करें",
-    noReminders: "कोई रिमाइंडर नहीं। + दबाकर जोड़ें।",
-    reminderSet: "रिमाइंडर सेट हो गया!",
-    reminderDeleted: "रिमाइंडर हटाया गया",
-    youtube: "यूट्यूब",
-    google: "गूगल",
-    gemini: "जेमिनी",
-    chatgpt: "चैटजीपीटी",
-    news: "समाचार",
-    aiChat: "AI दोस्त",
-    aiWelcomeTitle: "आपका स्मार्ट दोस्त",
-    aiWelcomeSub: "किसी भी भाषा में कुछ भी पूछें!",
-    aiPlaceholder: "कुछ भी पूछें...",
-  },
-
   bn: {
     appName: "ZenSpace",
     tagline: "প্রতিদিনের সহায়ক সরঞ্জাম",
@@ -1172,10 +1096,10 @@ export const translations: Record<string, Translations> = {
     converter: "রূপান্তরকারী",
     timer: "টাইমার",
     notes: "নোটস",
-    tipCalculator: "টিপ ক্যালকুলেটর",
+    tip: "টিপ ক্যালকুলেটর",
     bmi: "BMI",
-    ageCalculator: "বয়স ক্যালকুলেটর",
-    passwordGenerator: "পাসওয়ার্ড জেনারেটর",
+    age: "বয়স ক্যালকুলেটর",
+    password: "পাসওয়ার্ড জেনারেটর",
     calculate: "হিসাব করুন",
     result: "ফলাফল",
     clear: "মুছুন",
@@ -1236,10 +1160,10 @@ export const translations: Record<string, Translations> = {
     converter: "కన్వర్టర్",
     timer: "టైమర్",
     notes: "నోట్స్",
-    tipCalculator: "టిప్ కాల్క్యులేటర్",
+    tip: "టిప్ కాల్క్యులేటర్",
     bmi: "BMI",
-    ageCalculator: "వయసు కాల్క్యులేటర్",
-    passwordGenerator: "పాస్‌వర్డ్ జెనరేటర్",
+    age: "వయసు కాల్క్యులేటర్",
+    password: "పాస్‌వర్డ్ జెనరేటర్",
     calculate: "లెక్కించు",
     result: "ఫలితం",
     clear: "క్లియర్",
@@ -1300,10 +1224,10 @@ export const translations: Record<string, Translations> = {
     converter: "परिवर्तक",
     timer: "टाइमर",
     notes: "नोट्स",
-    tipCalculator: "टिप कॅल्क्युलेटर",
+    tip: "टिप कॅल्क्युलेटर",
     bmi: "BMI",
-    ageCalculator: "वय कॅल्क्युलेटर",
-    passwordGenerator: "पासवर्ड जनरेटर",
+    age: "वय कॅल्क्युलेटर",
+    password: "पासवर्ड जनरेटर",
     calculate: "मोजा",
     result: "निकाल",
     clear: "साफ करा",
@@ -1364,10 +1288,10 @@ export const translations: Record<string, Translations> = {
     converter: "மாற்றி",
     timer: "நேரமானி",
     notes: "குறிப்புகள்",
-    tipCalculator: "டிப் கணிப்பான்",
+    tip: "டிப் கணிப்பான்",
     bmi: "BMI",
-    ageCalculator: "வயது கணிப்பான்",
-    passwordGenerator: "கடவுச்சொல் உருவாக்கி",
+    age: "வயது கணிப்பான்",
+    password: "கடவுச்சொல் உருவாக்கி",
     calculate: "கணக்கிடு",
     result: "முடிவு",
     clear: "அழி",
@@ -1428,10 +1352,10 @@ export const translations: Record<string, Translations> = {
     converter: "کنورٹر",
     timer: "ٹائمر",
     notes: "نوٹس",
-    tipCalculator: "ٹپ کیلکولیٹر",
+    tip: "ٹپ کیلکولیٹر",
     bmi: "BMI",
-    ageCalculator: "عمر کیلکولیٹر",
-    passwordGenerator: "پاس ورڈ جنریٹر",
+    age: "عمر کیلکولیٹر",
+    password: "پاس ورڈ جنریٹر",
     calculate: "حساب لگائیں",
     result: "نتیجہ",
     clear: "صاف کریں",
@@ -1492,10 +1416,10 @@ export const translations: Record<string, Translations> = {
     converter: "કન્વર્ટર",
     timer: "ટાઇમર",
     notes: "નોંધ",
-    tipCalculator: "ટિપ કેલ્ક્યુલેટર",
+    tip: "ટિપ કેલ્ક્યુલેટર",
     bmi: "BMI",
-    ageCalculator: "ઉંમર કેલ્ક્યુલેટર",
-    passwordGenerator: "પાસવર્ડ જનરેટર",
+    age: "ઉંમર કેલ્ક્યુલેટર",
+    password: "પાસવર્ડ જનરેટર",
     calculate: "ગણતરી કરો",
     result: "પરિણામ",
     clear: "સ્પષ્ટ કરો",
@@ -1556,10 +1480,10 @@ export const translations: Record<string, Translations> = {
     converter: "ಕನ್ವರ್ಟರ್",
     timer: "ಟೈಮರ್",
     notes: "ಟಿಪ್ಪಣಿಗಳು",
-    tipCalculator: "ಟಿಪ್ ಕ್ಯಾಲ್ಕ್ಯುಲೇಟರ್",
+    tip: "ಟಿಪ್ ಕ್ಯಾಲ್ಕ್ಯುಲೇಟರ್",
     bmi: "BMI",
-    ageCalculator: "ವಯಸ್ಸು ಕ್ಯಾಲ್ಕ್ಯುಲೇಟರ್",
-    passwordGenerator: "ಪಾಸ್‌ವರ್ಡ್ ಜನರೇಟರ್",
+    age: "ವಯಸ್ಸು ಕ್ಯಾಲ್ಕ್ಯುಲೇಟರ್",
+    password: "ಪಾಸ್‌ವರ್ಡ್ ಜನರೇಟರ್",
     calculate: "ಲೆಕ್ಕ ಹಾಕು",
     result: "ಫಲಿತಾಂಶ",
     clear: "ಅಳಿಸು",
@@ -1620,10 +1544,10 @@ export const translations: Record<string, Translations> = {
     converter: "കൺവേർട്ടർ",
     timer: "ടൈമർ",
     notes: "കുറിപ്പുകൾ",
-    tipCalculator: "ടിപ്പ് കാൽക്കുലേറ്റർ",
+    tip: "ടിപ്പ് കാൽക്കുലേറ്റർ",
     bmi: "BMI",
-    ageCalculator: "പ്രായം കണക്കാക്കൽ",
-    passwordGenerator: "പാസ്‌വേഡ് ജനറേറ്റർ",
+    age: "പ്രായം കണക്കാക്കൽ",
+    password: "പാസ്‌വേഡ് ജനറേറ്റർ",
     calculate: "കണക്കാക്കുക",
     result: "ഫലം",
     clear: "മായ്ക്കുക",
@@ -1684,10 +1608,10 @@ export const translations: Record<string, Translations> = {
     converter: "ਕਨਵਰਟਰ",
     timer: "ਟਾਈਮਰ",
     notes: "ਨੋਟਸ",
-    tipCalculator: "ਟਿਪ ਕੈਲਕੁਲੇਟਰ",
+    tip: "ਟਿਪ ਕੈਲਕੁਲੇਟਰ",
     bmi: "BMI",
-    ageCalculator: "ਉਮਰ ਕੈਲਕੁਲੇਟਰ",
-    passwordGenerator: "ਪਾਸਵਰਡ ਜਨਰੇਟਰ",
+    age: "ਉਮਰ ਕੈਲਕੁਲੇਟਰ",
+    password: "ਪਾਸਵਰਡ ਜਨਰੇਟਰ",
     calculate: "ਹਿਸਾਬ ਲਗਾਓ",
     result: "ਨਤੀਜਾ",
     clear: "ਸਾਫ਼ ਕਰੋ",
@@ -1748,10 +1672,10 @@ export const translations: Record<string, Translations> = {
     converter: "କନ୍ଭର୍ଟର",
     timer: "ଟାଇମର",
     notes: "ଟିପ୍ପଣୀ",
-    tipCalculator: "ଟିପ୍ କ୍ୟାଲ୍କୁଲେଟର",
+    tip: "ଟିପ୍ କ୍ୟାଲ୍କୁଲେଟର",
     bmi: "BMI",
-    ageCalculator: "ବୟସ କ୍ୟାଲ୍କୁଲେଟର",
-    passwordGenerator: "ପାସ୍‌ୱର୍ଡ ଜେନେରେଟର",
+    age: "ବୟସ କ୍ୟାଲ୍କୁଲେଟର",
+    password: "ପାସ୍‌ୱର୍ଡ ଜେନେରେଟର",
     calculate: "ଗଣନା କରନ୍ତୁ",
     result: "ଫଳାଫଳ",
     clear: "ପରିଷ୍କାର",
@@ -1812,10 +1736,10 @@ export const translations: Record<string, Translations> = {
     converter: "কনভাৰ্টাৰ",
     timer: "টাইমাৰ",
     notes: "নোট",
-    tipCalculator: "টিপ কেলকুলেটৰ",
+    tip: "টিপ কেলকুলেটৰ",
     bmi: "BMI",
-    ageCalculator: "বয়স কেলকুলেটৰ",
-    passwordGenerator: "পাছৱৰ্ড জেনেৰেটৰ",
+    age: "বয়স কেলকুলেটৰ",
+    password: "পাছৱৰ্ড জেনেৰেটৰ",
     calculate: "গণনা কৰক",
     result: "ফলাফল",
     clear: "পৰিষ্কাৰ",
@@ -1876,10 +1800,10 @@ export const translations: Record<string, Translations> = {
     converter: "कनवर्टर",
     timer: "टाइमर",
     notes: "नोट",
-    tipCalculator: "टिप कैलकुलेटर",
+    tip: "टिप कैलकुलेटर",
     bmi: "BMI",
-    ageCalculator: "उमर कैलकुलेटर",
-    passwordGenerator: "पासवर्ड जेनरेटर",
+    age: "उमर कैलकुलेटर",
+    password: "पासवर्ड जेनरेटर",
     calculate: "गणना करू",
     result: "परिणाम",
     clear: "साफ करू",
@@ -1940,10 +1864,10 @@ export const translations: Record<string, Translations> = {
     converter: "कन्भर्टर",
     timer: "टाइमर",
     notes: "नोट्स",
-    tipCalculator: "टिप क्याल्कुलेटर",
+    tip: "टिप क्याल्कुलेटर",
     bmi: "BMI",
-    ageCalculator: "उमेर क्याल्कुलेटर",
-    passwordGenerator: "पासवर्ड जेनेरेटर",
+    age: "उमेर क्याल्कुलेटर",
+    password: "पासवर्ड जेनेरेटर",
     calculate: "गणना गर्नुहोस्",
     result: "नतिजा",
     clear: "खाली गर्नुहोस्",
@@ -2004,10 +1928,10 @@ export const translations: Record<string, Translations> = {
     converter: "कन्व्हर्टर",
     timer: "टायमर",
     notes: "नोट्स",
-    tipCalculator: "टिप कॅल्क्युलेटर",
+    tip: "टिप कॅल्क्युलेटर",
     bmi: "BMI",
-    ageCalculator: "वांय कॅल्क्युलेटर",
-    passwordGenerator: "पासवर्ड जनरेटर",
+    age: "वांय कॅल्क्युलेटर",
+    password: "पासवर्ड जनरेटर",
     calculate: "मोजात",
     result: "निकाल",
     clear: "साफ करात",
@@ -2068,10 +1992,10 @@ export const translations: Record<string, Translations> = {
     converter: "ڦيرائيندڙ",
     timer: "ٽائيمر",
     notes: "نوٽس",
-    tipCalculator: "ٽپ ڳڻپيوڪر",
+    tip: "ٽپ ڳڻپيوڪر",
     bmi: "BMI",
-    ageCalculator: "عمر ڳڻپيوڪر",
-    passwordGenerator: "پاسورڊ ٺاهيندڙ",
+    age: "عمر ڳڻپيوڪر",
+    password: "پاسورڊ ٺاهيندڙ",
     calculate: "ڳڻيو",
     result: "نتيجو",
     clear: "صاف ڪريو",
