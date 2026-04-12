@@ -6,21 +6,30 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   Linking,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
+
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 
+const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+
 type Station = { id: string; name: string; genre: string; url: string; emoji: string; color: string };
 type LocalTrack = { id: string; name: string; uri: string; size?: number };
-type PlayingSource = "radio" | "local";
+type PlayingSource = "radio" | "local" | "spotify";
+type SpotifyTrack = {
+  id: string; name: string; artists: string; album: string;
+  image: string | null; preview_url: string | null; spotify_url: string | null; duration_ms: number;
+};
 
 const STATIONS: Station[] = [
   { id: "bollywood", name: "Bollywood Hits", genre: "Hindi", url: "https://streaming.radio.co/s3a7a9c1af/listen", emoji: "🎵", color: "#f59e0b" },
@@ -40,7 +49,7 @@ const MUSIC_APPS: AppLink[] = [
   { id: "wynk", name: "Wynk Music", url: "https://wynk.in/music", emoji: "🎵", color: "#6C00D5" },
 ];
 
-const TABS = ["Phone", "Radio", "Apps"] as const;
+const TABS = ["Spotify", "Phone", "Radio", "Apps"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function MusicScreen() {
@@ -51,7 +60,7 @@ export default function MusicScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const [tab, setTab] = useState<Tab>("Phone");
+  const [tab, setTab] = useState<Tab>("Spotify");
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [source, setSource] = useState<PlayingSource>("local");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -61,6 +70,12 @@ export default function MusicScreen() {
   const [duration, setDuration] = useState(0);
   const soundRef = useRef<Audio.Sound | null>(null);
   const marqueAnim = useRef(new Animated.Value(0)).current;
+
+  // Spotify state
+  const [spotifyQuery, setSpotifyQuery] = useState("");
+  const [spotifyResults, setSpotifyResults] = useState<SpotifyTrack[]>([]);
+  const [spotifyLoading, setSpotifyLoading] = useState(false);
+  const [spotifyError, setSpotifyError] = useState<string | null>(null);
 
   useEffect(() => {
     Audio.setAudioModeAsync({ staysActiveInBackground: true, playsInSilentModeIOS: true });
@@ -78,6 +93,49 @@ export default function MusicScreen() {
     loop.start();
     return () => loop.stop();
   }, [currentId]);
+
+  // Load featured Spotify tracks when tab opens
+  useEffect(() => {
+    if (tab === "Spotify" && spotifyResults.length === 0) {
+      fetchFeatured();
+    }
+  }, [tab]);
+
+  async function fetchFeatured() {
+    setSpotifyLoading(true);
+    setSpotifyError(null);
+    try {
+      const r = await fetch(`${API_BASE}/spotify/featured`);
+      const data = await r.json();
+      if (data.tracks) setSpotifyResults(data.tracks);
+      else setSpotifyError("Could not load tracks");
+    } catch {
+      setSpotifyError("Network error. Check connection.");
+    } finally {
+      setSpotifyLoading(false);
+    }
+  }
+
+  async function searchSpotify(q: string) {
+    if (!q.trim()) { fetchFeatured(); return; }
+    setSpotifyLoading(true);
+    setSpotifyError(null);
+    try {
+      const r = await fetch(`${API_BASE}/spotify/search?q=${encodeURIComponent(q)}`);
+      const data = await r.json();
+      if (data.tracks) setSpotifyResults(data.tracks);
+      else setSpotifyError(data.error ?? "No results");
+    } catch {
+      setSpotifyError("Network error. Check connection.");
+    } finally {
+      setSpotifyLoading(false);
+    }
+  }
+
+  function formatMs(ms: number) {
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
 
   async function stopSound() {
     if (soundRef.current) {
@@ -171,9 +229,10 @@ export default function MusicScreen() {
 
   const currentStation = STATIONS.find((s) => s.id === currentId && source === "radio");
   const currentTrack = localTracks.find((t) => t.id === currentId && source === "local");
-  const nowPlayingName = currentStation?.name ?? currentTrack?.name ?? null;
-  const nowPlayingColor = currentStation?.color ?? "#6366f1";
-  const nowPlayingEmoji = currentStation?.emoji ?? "🎵";
+  const currentSpotifyTrack = spotifyResults.find((t) => t.id === currentId && source === "spotify");
+  const nowPlayingName = currentStation?.name ?? currentTrack?.name ?? (currentSpotifyTrack ? `${currentSpotifyTrack.name} · ${currentSpotifyTrack.artists}` : null);
+  const nowPlayingColor = currentStation?.color ?? (source === "spotify" ? "#1DB954" : "#6366f1");
+  const nowPlayingEmoji = currentStation?.emoji ?? (source === "spotify" ? "🎧" : "🎵");
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -241,13 +300,126 @@ export default function MusicScreen() {
             style={[styles.tabBtn, tab === tp && { borderBottomColor: colors.primary, borderBottomWidth: 2 }]}
           >
             <Text style={[styles.tabLabel, { color: tab === tp ? colors.primary : colors.mutedForeground }]}>
-              {tp === "Phone" ? "📱 My Music" : tp === "Radio" ? "📻 Radio" : "🔗 Apps"}
+              {tp === "Spotify" ? "🎧 Spotify" : tp === "Phone" ? "📱 My Music" : tp === "Radio" ? "📻 Radio" : "🔗 Apps"}
             </Text>
           </Pressable>
         ))}
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]} showsVerticalScrollIndicator={false}>
+
+        {/* ── Spotify Tab ─────────────────────────────────────────── */}
+        {tab === "Spotify" && (
+          <>
+            {/* Search bar */}
+            <View style={[styles.spotifySearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="search" size={18} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.spotifyInput, { color: colors.foreground }]}
+                placeholder="Search songs, artists, albums…"
+                placeholderTextColor={colors.mutedForeground}
+                value={spotifyQuery}
+                onChangeText={setSpotifyQuery}
+                onSubmitEditing={() => searchSpotify(spotifyQuery)}
+                returnKeyType="search"
+              />
+              {spotifyQuery.length > 0 && (
+                <Pressable onPress={() => { setSpotifyQuery(""); fetchFeatured(); }} hitSlop={8}>
+                  <Feather name="x" size={16} color={colors.mutedForeground} />
+                </Pressable>
+              )}
+            </View>
+
+            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+              {spotifyQuery.trim() ? "SEARCH RESULTS" : "🔥 TRENDING IN INDIA"}
+            </Text>
+
+            {spotifyLoading && (
+              <View style={styles.spotifyCenter}>
+                <Ionicons name="musical-notes" size={40} color="#1DB954" />
+                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground }]}>Loading…</Text>
+              </View>
+            )}
+
+            {spotifyError && !spotifyLoading && (
+              <View style={styles.spotifyCenter}>
+                <Ionicons name="warning-outline" size={36} color="#ef4444" />
+                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground }]}>{spotifyError}</Text>
+                <Pressable
+                  onPress={fetchFeatured}
+                  style={[styles.spotifyRetry, { backgroundColor: "#1DB954" }]}
+                >
+                  <Text style={styles.spotifyRetryText}>Try Again</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {!spotifyLoading && !spotifyError && spotifyResults.map((track) => {
+              const isActive = currentId === track.id && source === "spotify";
+              return (
+                <View
+                  key={track.id}
+                  style={[styles.spotifyCard, {
+                    backgroundColor: isActive ? "#1DB95414" : colors.card,
+                    borderColor: isActive ? "#1DB954" : colors.border,
+                  }]}
+                >
+                  {track.image ? (
+                    <Image source={{ uri: track.image }} style={styles.spotifyAlbumArt} />
+                  ) : (
+                    <View style={[styles.spotifyAlbumArt, { backgroundColor: colors.border, alignItems: "center", justifyContent: "center" }]}>
+                      <Ionicons name="musical-note" size={20} color={colors.mutedForeground} />
+                    </View>
+                  )}
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={[styles.spotifyTrackName, { color: colors.foreground }]} numberOfLines={1}>
+                      {track.name}
+                    </Text>
+                    <Text style={[styles.spotifyArtist, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {track.artists}
+                    </Text>
+                    <Text style={[styles.spotifyDuration, { color: colors.mutedForeground }]}>
+                      {formatMs(track.duration_ms)}
+                    </Text>
+                  </View>
+                  {/* Preview play button */}
+                  {track.preview_url && (
+                    <Pressable
+                      onPress={() => playUri(track.id, track.preview_url!, "spotify")}
+                      style={[styles.spotifyPlayBtn, { backgroundColor: isActive && isPlaying ? "#1DB954" : colors.border }]}
+                    >
+                      <Ionicons
+                        name={isActive && isPlaying ? "pause" : "play"}
+                        size={16}
+                        color={isActive && isPlaying ? "#fff" : colors.mutedForeground}
+                      />
+                    </Pressable>
+                  )}
+                  {/* Open in Spotify */}
+                  <Pressable
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      if (track.spotify_url) Linking.openURL(track.spotify_url);
+                    }}
+                    style={styles.spotifyOpenBtn}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="open-outline" size={18} color="#1DB954" />
+                  </Pressable>
+                </View>
+              );
+            })}
+
+            {/* Powered by Spotify */}
+            {!spotifyLoading && (
+              <View style={styles.spotifyFooter}>
+                <Text style={[styles.spotifyFooterText, { color: colors.mutedForeground }]}>
+                  🎧 Powered by Spotify · Tap ▶ for 30-sec preview · Tap ↗ to open full song in Spotify
+                </Text>
+              </View>
+            )}
+          </>
+        )}
 
         {/* ── Phone Music Tab ─────────────────────────────────────── */}
         {tab === "Phone" && (
@@ -433,4 +605,27 @@ const styles = StyleSheet.create({
   appIconBox: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   appEmoji: { fontSize: 24 },
   appRowName: { flex: 1, fontSize: 15, fontFamily: "Inter_600SemiBold" },
+
+  // Spotify styles
+  spotifySearch: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 14, height: 48, borderRadius: 14, borderWidth: 1,
+  },
+  spotifyInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
+  spotifyCenter: { alignItems: "center", paddingVertical: 40, gap: 12 },
+  spotifyCenterText: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" },
+  spotifyRetry: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 20 },
+  spotifyRetryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  spotifyCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    padding: 10, borderRadius: 16, borderWidth: 1,
+  },
+  spotifyAlbumArt: { width: 52, height: 52, borderRadius: 10 },
+  spotifyTrackName: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  spotifyArtist: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  spotifyDuration: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  spotifyPlayBtn: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
+  spotifyOpenBtn: { padding: 6 },
+  spotifyFooter: { alignItems: "center", paddingTop: 8 },
+  spotifyFooterText: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 17 },
 });
