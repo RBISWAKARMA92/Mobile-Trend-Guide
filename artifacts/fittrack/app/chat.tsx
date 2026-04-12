@@ -28,10 +28,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useActivity } from "@/context/ActivityContext";
 import { useColors } from "@/hooks/useColors";
 import RewardedAdModal from "@/components/RewardedAdModal";
+import { getApiBase } from "@/constants/api";
 
 type Message = { role: "user" | "assistant"; content: string };
 
-const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+const API_BASE = getApiBase();
 
 const SUGGESTIONS_EN = [
   "What is 15% tip on ₹850?",

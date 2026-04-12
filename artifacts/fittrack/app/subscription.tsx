@@ -19,7 +19,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 import RewardedAdModal from "@/components/RewardedAdModal";
 
-const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+import { getApiBase } from "@/constants/api";
+const BASE_URL = getApiBase();
 
 type Plan = {
   id: string;

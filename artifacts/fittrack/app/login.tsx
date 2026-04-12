@@ -15,7 +15,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+import { getApiBase } from "@/constants/api";
+const BASE_URL = getApiBase();
 
 export default function LoginScreen() {
   const colors = useColors();

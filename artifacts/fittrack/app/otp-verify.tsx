@@ -16,7 +16,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
-const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+import { getApiBase } from "@/constants/api";
+const BASE_URL = getApiBase();
 const OTP_LENGTH = 6;
 
 export default function OtpVerifyScreen() {
