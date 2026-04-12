@@ -17,9 +17,14 @@ const PLANS = [
     name: "Free",
     price: 0,
     priceLabel: "Free",
+    durationDays: 0,
+    durationLabel: "Forever",
     credits: 50,
+    creditsPerMonth: 50,
+    savings: null,
+    badge: null,
     features: [
-      "50 AI chat messages",
+      "50 AI chat messages total",
       "All 13 tools included",
       "Voice & video recorder",
       "Music player",
@@ -28,34 +33,65 @@ const PLANS = [
     popular: false,
   },
   {
-    id: "basic",
-    name: "Basic",
+    id: "monthly",
+    name: "Monthly",
     price: 49,
     priceLabel: "₹49/month",
+    durationDays: 30,
+    durationLabel: "1 month",
     credits: 500,
+    creditsPerMonth: 500,
+    savings: null,
+    badge: null,
     features: [
-      "500 AI chat messages/month",
+      "500 AI chat credits/month",
+      "All 13 tools included",
+      "Voice & video recorder",
+      "Music player",
+      "Credits refresh every month",
+    ],
+    color: "#0ea5e9",
+    popular: false,
+  },
+  {
+    id: "quarterly",
+    name: "3 Months",
+    price: 121,
+    priceLabel: "₹121 for 3 months",
+    durationDays: 90,
+    durationLabel: "3 months",
+    credits: 1500,
+    creditsPerMonth: 500,
+    savings: "Save ₹26",
+    badge: "Best Value",
+    features: [
+      "1500 AI chat credits (500/month)",
       "All 13 tools included",
       "Voice & video recorder",
       "Music player",
       "Credits refresh monthly",
     ],
-    color: "#0ea5e9",
+    color: "#10b981",
     popular: true,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: 99,
-    priceLabel: "₹99/month",
-    credits: -1,
+    id: "yearly",
+    name: "Yearly",
+    price: 399,
+    priceLabel: "₹399/year",
+    durationDays: 365,
+    durationLabel: "12 months",
+    credits: 6000,
+    creditsPerMonth: 500,
+    savings: "Save ₹189",
+    badge: "32% Off",
     features: [
-      "Unlimited AI chat messages",
+      "6000 AI chat credits (500/month)",
       "All 13 tools included",
       "Voice & video recorder",
       "Music player",
-      "Priority support",
       "Credits refresh monthly",
+      "Priority support",
     ],
     color: "#f59e0b",
     popular: false,
@@ -82,7 +118,7 @@ router.post("/subscription/create-order", async (req, res) => {
     const order = await razorpay.orders.create({
       amount: plan.price * 100,
       currency: "INR",
-      receipt: `order_user${payload.userId}_${Date.now()}`,
+      receipt: `order_u${payload.userId}_${Date.now()}`,
       notes: {
         userId: String(payload.userId),
         planId: plan.id,
@@ -95,6 +131,7 @@ router.post("/subscription/create-order", async (req, res) => {
       keyId: process.env["RAZORPAY_KEY_ID"],
       planId: plan.id,
       planName: plan.name,
+      priceLabel: plan.priceLabel,
     });
   } catch (err: any) {
     return res.status(500).json({ error: "Failed to create order", details: err?.message });
@@ -122,14 +159,7 @@ router.post("/subscription/verify-payment", async (req, res) => {
   if (!plan) return res.status(400).json({ error: "Invalid plan" });
 
   try {
-    await pool.query("UPDATE subscriptions SET is_active = false WHERE user_id = $1", [payload.userId]);
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    await pool.query(
-      "INSERT INTO subscriptions (user_id, plan, credits_per_month, expires_at) VALUES ($1, $2, $3, $4)",
-      [payload.userId, plan.id, plan.credits, expiresAt]
-    );
-    const addCredits = plan.credits === -1 ? 9999 : plan.credits;
-    await pool.query("UPDATE users SET credits = $1 WHERE id = $2", [addCredits, payload.userId]);
+    await activatePlan(payload.userId, plan);
     const user = await pool.query("SELECT * FROM users WHERE id = $1", [payload.userId]);
     return res.json({ success: true, plan: plan.id, credits: user.rows[0].credits });
   } catch {
@@ -149,19 +179,24 @@ router.post("/subscription/activate", async (req, res) => {
   if (!plan) return res.status(400).json({ error: "Invalid plan" });
 
   try {
-    await pool.query("UPDATE subscriptions SET is_active = false WHERE user_id = $1", [payload.userId]);
-    const expiresAt = plan.id === "free" ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    await pool.query(
-      "INSERT INTO subscriptions (user_id, plan, credits_per_month, expires_at) VALUES ($1, $2, $3, $4)",
-      [payload.userId, plan.id, plan.credits, expiresAt]
-    );
-    const addCredits = plan.credits === -1 ? 9999 : plan.credits;
-    await pool.query("UPDATE users SET credits = $1 WHERE id = $2", [addCredits, payload.userId]);
+    await activatePlan(payload.userId, plan);
     const user = await pool.query("SELECT * FROM users WHERE id = $1", [payload.userId]);
     return res.json({ success: true, plan: plan.id, credits: user.rows[0].credits });
   } catch {
     return res.status(500).json({ error: "Failed to activate plan" });
   }
 });
+
+async function activatePlan(userId: number, plan: (typeof PLANS)[0]) {
+  await pool.query("UPDATE subscriptions SET is_active = false WHERE user_id = $1", [userId]);
+  const expiresAt = plan.durationDays > 0
+    ? new Date(Date.now() + plan.durationDays * 24 * 60 * 60 * 1000)
+    : null;
+  await pool.query(
+    "INSERT INTO subscriptions (user_id, plan, credits_per_month, expires_at) VALUES ($1, $2, $3, $4)",
+    [userId, plan.id, plan.creditsPerMonth, expiresAt]
+  );
+  await pool.query("UPDATE users SET credits = $1 WHERE id = $2", [plan.credits, userId]);
+}
 
 export default router;

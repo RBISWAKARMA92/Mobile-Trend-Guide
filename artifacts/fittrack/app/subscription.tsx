@@ -23,12 +23,16 @@ const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 type Plan = {
   id: string;
   name: string;
+  price: number;
   priceLabel: string;
+  durationLabel: string;
   credits: number;
+  creditsPerMonth: number;
+  savings: string | null;
+  badge: string | null;
   features: string[];
   color: string;
   popular: boolean;
-  price: number;
 };
 
 type RazorpayOrder = {
@@ -38,6 +42,7 @@ type RazorpayOrder = {
   keyId: string;
   planId: string;
   planName: string;
+  priceLabel: string;
 };
 
 function buildRazorpayHTML(order: RazorpayOrder, phone: string) {
@@ -54,7 +59,7 @@ var options = {
   amount: "${order.amount}",
   currency: "${order.currency}",
   name: "Daily Tools",
-  description: "${order.planName} Plan – Monthly Subscription",
+  description: "${order.planName} – ${order.priceLabel}",
   order_id: "${order.orderId}",
   prefill: { contact: "${phone}" },
   theme: { color: "#6366f1" },
@@ -110,7 +115,6 @@ export default function SubscriptionScreen() {
   async function handleFreePlan() {
     if (!token) { router.push("/login"); return; }
     setActivating("free");
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const res = await fetch(`${BASE_URL}/subscription/activate`, {
         method: "POST",
@@ -129,8 +133,9 @@ export default function SubscriptionScreen() {
 
   async function handlePaidPlan(planId: string) {
     if (!token) { router.push("/login"); return; }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     if (Platform.OS === "web") {
-      Alert.alert("Payment", "Razorpay payment works in the Expo Go app on your phone. On web it simulates activation.");
       setActivating(planId);
       const res = await fetch(`${BASE_URL}/subscription/activate`, {
         method: "POST",
@@ -145,8 +150,8 @@ export default function SubscriptionScreen() {
       setActivating(null);
       return;
     }
+
     setActivating(planId);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       const res = await fetch(`${BASE_URL}/subscription/create-order`, {
         method: "POST",
@@ -200,6 +205,8 @@ export default function SubscriptionScreen() {
   }
 
   const currentPlan = subscription?.plan ?? "free";
+  const paidPlans = plans.filter((p) => p.id !== "free");
+  const freePlan = plans.find((p) => p.id === "free");
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -211,7 +218,7 @@ export default function SubscriptionScreen() {
               <Feather name="x" size={22} color={colors.foreground} />
             </Pressable>
             <Text style={[styles.webViewTitle, { color: colors.foreground }]}>Secure Payment</Text>
-            <View style={{ width: 36 }} />
+            <Ionicons name="shield-checkmark" size={18} color="#22c55e" />
           </View>
           {razorpayOrder && (
             <WebView
@@ -229,7 +236,7 @@ export default function SubscriptionScreen() {
         <Pressable onPress={() => router.replace("/")} style={styles.backBtn}>
           <Feather name="x" size={22} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.title, { color: colors.foreground }]}>Subscription Plans</Text>
+        <Text style={[styles.title, { color: colors.foreground }]}>Choose a Plan</Text>
         <View style={{ width: 30 }} />
       </View>
 
@@ -237,116 +244,153 @@ export default function SubscriptionScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Credits banner */}
+        {/* Credits status banner */}
         {user && (
-          <View style={[styles.creditsBanner, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}>
-            <Ionicons name="flash" size={22} color={colors.primary} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.creditsTitle, { color: colors.foreground }]}>
-                {user.credits === 9999 ? "Unlimited" : user.credits} AI Credits Remaining
+          <View style={[styles.creditsBanner, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
+            <View style={[styles.creditsBadge, { backgroundColor: colors.primary }]}>
+              <Ionicons name="flash" size={16} color="#fff" />
+              <Text style={styles.creditsBadgeText}>
+                {user.credits === 9999 ? "∞" : user.credits}
               </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.creditsTitle, { color: colors.foreground }]}>AI Credits Remaining</Text>
               <Text style={[styles.creditsSub, { color: colors.mutedForeground }]}>
-                Current plan: <Text style={{ fontFamily: "Inter_700Bold", textTransform: "capitalize" }}>{currentPlan}</Text>
+                Current plan: <Text style={{ fontFamily: "Inter_700Bold", textTransform: "capitalize", color: colors.primary }}>{currentPlan}</Text>
               </Text>
             </View>
           </View>
         )}
 
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Choose Your Plan</Text>
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Premium Plans</Text>
         <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
-          Upgrade for more AI chat messages every month
+          More messages, more savings with longer plans
         </Text>
 
         {loading ? (
           <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
-          plans.map((plan) => {
-            const isActive = currentPlan === plan.id;
-            const isSuccess = success === plan.id;
-            return (
-              <View
-                key={plan.id}
-                style={[
-                  styles.planCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: isActive ? plan.color : colors.border,
-                    borderWidth: isActive ? 2 : 1,
-                  },
-                ]}
-              >
-                {plan.popular && (
-                  <View style={[styles.popularBadge, { backgroundColor: plan.color }]}>
-                    <Text style={styles.popularText}>Most Popular</Text>
-                  </View>
-                )}
-                <View style={styles.planHeader}>
-                  <View style={[styles.planIcon, { backgroundColor: plan.color + "20" }]}>
-                    <Ionicons
-                      name={plan.id === "free" ? "gift-outline" : plan.id === "basic" ? "star-outline" : "rocket-outline"}
-                      size={24}
-                      color={plan.color}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.planName, { color: colors.foreground }]}>{plan.name}</Text>
-                    <Text style={[styles.planPrice, { color: plan.color }]}>{plan.priceLabel}</Text>
-                  </View>
-                  <Text style={[styles.planCredits, { color: colors.mutedForeground }]}>
-                    {plan.credits === -1 ? "∞" : plan.credits} credits
-                  </Text>
-                </View>
-
-                <View style={styles.featuresBlock}>
-                  {plan.features.map((f) => (
-                    <View key={f} style={styles.featureRow}>
-                      <Ionicons name="checkmark-circle" size={16} color={plan.color} />
-                      <Text style={[styles.featureText, { color: colors.mutedForeground }]}>{f}</Text>
-                    </View>
-                  ))}
-                </View>
-
-                <Pressable
-                  onPress={() => {
-                    if (plan.price === 0) handleFreePlan();
-                    else handlePaidPlan(plan.id);
-                  }}
-                  disabled={isActive || !!activating || !!success}
-                  style={({ pressed }) => [
-                    styles.planBtn,
+          <>
+            {/* Paid plans */}
+            {paidPlans.map((plan) => {
+              const isActive = currentPlan === plan.id;
+              const isSuccess = success === plan.id;
+              return (
+                <View
+                  key={plan.id}
+                  style={[
+                    styles.planCard,
                     {
-                      backgroundColor: isActive || isSuccess ? "#22c55e" : plan.color,
-                      opacity: pressed ? 0.85 : 1,
+                      backgroundColor: colors.card,
+                      borderColor: isActive ? plan.color : plan.popular ? plan.color + "60" : colors.border,
+                      borderWidth: isActive || plan.popular ? 2 : 1,
                     },
                   ]}
                 >
-                  {activating === plan.id ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : isActive || isSuccess ? (
-                    <>
-                      <Ionicons name="checkmark" size={18} color="#fff" />
-                      <Text style={styles.planBtnText}>{isSuccess ? "Activated!" : "Current Plan"}</Text>
-                    </>
+                  {/* Badge */}
+                  {(plan.badge || plan.popular) && (
+                    <View style={[styles.badge, { backgroundColor: plan.color }]}>
+                      <Text style={styles.badgeText}>{plan.badge ?? "Popular"}</Text>
+                    </View>
+                  )}
+
+                  <View style={styles.planTop}>
+                    <View style={[styles.planIconBox, { backgroundColor: plan.color + "18" }]}>
+                      <Ionicons
+                        name={plan.id === "monthly" ? "calendar-outline" : plan.id === "quarterly" ? "star-outline" : "rocket-outline"}
+                        size={22}
+                        color={plan.color}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.planName, { color: colors.foreground }]}>{plan.name}</Text>
+                      <Text style={[styles.planDuration, { color: colors.mutedForeground }]}>{plan.durationLabel}</Text>
+                    </View>
+                    <View style={styles.priceCol}>
+                      <Text style={[styles.planPrice, { color: plan.color }]}>{plan.priceLabel}</Text>
+                      {plan.savings && (
+                        <View style={[styles.savingsPill, { backgroundColor: "#22c55e18" }]}>
+                          <Text style={styles.savingsText}>{plan.savings}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                  <View style={styles.featuresBlock}>
+                    {plan.features.map((f) => (
+                      <View key={f} style={styles.featureRow}>
+                        <Ionicons name="checkmark-circle" size={15} color={plan.color} />
+                        <Text style={[styles.featureText, { color: colors.mutedForeground }]}>{f}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <Pressable
+                    onPress={() => handlePaidPlan(plan.id)}
+                    disabled={isActive || !!activating || !!success}
+                    style={({ pressed }) => [
+                      styles.planBtn,
+                      {
+                        backgroundColor: isActive || isSuccess ? "#22c55e" : plan.color,
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}
+                  >
+                    {activating === plan.id ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : isActive || isSuccess ? (
+                      <>
+                        <Ionicons name="checkmark" size={18} color="#fff" />
+                        <Text style={styles.planBtnText}>{isSuccess ? "Activated!" : "Current Plan"}</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons name="card-outline" size={16} color="#fff" />
+                        <Text style={styles.planBtnText}>Subscribe – {plan.priceLabel}</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+              );
+            })}
+
+            {/* Free plan — compact */}
+            {freePlan && (
+              <View style={[styles.freePlanCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.freePlanTitle, { color: colors.foreground }]}>Free Plan</Text>
+                  <Text style={[styles.freePlanSub, { color: colors.mutedForeground }]}>50 credits · All tools · No payment</Text>
+                </View>
+                <Pressable
+                  onPress={handleFreePlan}
+                  disabled={currentPlan === "free" || !!activating || !!success}
+                  style={[
+                    styles.freePlanBtn,
+                    { backgroundColor: currentPlan === "free" || success === "free" ? "#22c55e" : colors.border },
+                  ]}
+                >
+                  {activating === "free" ? (
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <>
-                      {plan.price > 0 && <Ionicons name="card-outline" size={17} color="#fff" />}
-                      <Text style={styles.planBtnText}>
-                        {plan.price === 0 ? "Start Free" : `Pay ${plan.priceLabel}`}
-                      </Text>
-                    </>
+                    <Text style={[styles.freePlanBtnText, { color: currentPlan === "free" ? "#fff" : colors.foreground }]}>
+                      {currentPlan === "free" ? "Active" : "Use Free"}
+                    </Text>
                   )}
                 </Pressable>
               </View>
-            );
-          })
-        )}
+            )}
 
-        <View style={[styles.secureRow, { borderColor: colors.border }]}>
-          <Ionicons name="shield-checkmark-outline" size={16} color={colors.mutedForeground} />
-          <Text style={[styles.secureText, { color: colors.mutedForeground }]}>
-            Payments secured by Razorpay · UPI, Cards, NetBanking supported
-          </Text>
-        </View>
+            {/* Payment security note */}
+            <View style={[styles.secureRow, { borderColor: colors.border }]}>
+              <Ionicons name="shield-checkmark-outline" size={15} color="#22c55e" />
+              <Text style={[styles.secureText, { color: colors.mutedForeground }]}>
+                Payments secured by Razorpay · UPI, Cards, NetBanking, Wallets
+              </Text>
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -367,34 +411,51 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 4 },
   title: { flex: 1, fontSize: 20, fontFamily: "Inter_700Bold", textAlign: "center" },
-  content: { padding: 16, gap: 16 },
+  content: { padding: 16, gap: 14 },
   creditsBanner: {
     flexDirection: "row", alignItems: "center", gap: 12,
-    padding: 16, borderRadius: 16, borderWidth: 1,
+    padding: 14, borderRadius: 16, borderWidth: 1,
   },
-  creditsTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  creditsSub: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  creditsBadge: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
+  },
+  creditsBadgeText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 15 },
+  creditsTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  creditsSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
   sectionTitle: { fontSize: 22, fontFamily: "Inter_700Bold", textAlign: "center" },
-  sectionSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 4 },
-  planCard: { borderRadius: 20, padding: 20, gap: 16, overflow: "hidden" },
-  popularBadge: {
-    position: "absolute", top: 12, right: 12,
+  sectionSub: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
+  planCard: { borderRadius: 20, padding: 18, gap: 14, overflow: "hidden" },
+  badge: {
+    position: "absolute", top: 14, right: 14,
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
   },
-  popularText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
-  planHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  planIcon: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  planName: { fontSize: 18, fontFamily: "Inter_700Bold" },
-  planPrice: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  planCredits: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  featuresBlock: { gap: 8 },
+  badgeText: { color: "#fff", fontSize: 11, fontFamily: "Inter_700Bold" },
+  planTop: { flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 8 },
+  planIconBox: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  planName: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  planDuration: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  priceCol: { alignItems: "flex-end", gap: 4 },
+  planPrice: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  savingsPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  savingsText: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#22c55e" },
+  divider: { height: 1, marginHorizontal: -18 },
+  featuresBlock: { gap: 7 },
   featureRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   featureText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  planBtn: { height: 50, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
+  planBtn: { height: 48, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   planBtnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
+  freePlanCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    padding: 14, borderRadius: 16, borderWidth: 1,
+  },
+  freePlanTitle: { fontSize: 14, fontFamily: "Inter_700Bold" },
+  freePlanSub: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 1 },
+  freePlanBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  freePlanBtnText: { fontSize: 13, fontFamily: "Inter_700Bold" },
   secureRow: {
     flexDirection: "row", alignItems: "center", gap: 8,
     borderWidth: 1, borderRadius: 12, padding: 12,
   },
-  secureText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
+  secureText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
 });
