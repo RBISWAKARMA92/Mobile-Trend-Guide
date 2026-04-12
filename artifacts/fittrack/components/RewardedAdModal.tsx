@@ -15,12 +15,8 @@ import { useColors } from "@/hooks/useColors";
 // ─── AdMob Configuration ──────────────────────────────────────────────────────
 // Publisher: ca-pub-6765256613517786
 // Replace these with your real Ad Unit IDs from AdMob console after creating apps
-const ADMOB_REWARDED_ANDROID =
-  process.env.EXPO_PUBLIC_ADMOB_REWARDED_ANDROID ??
-  "ca-app-pub-3940256099942544/5224354917"; // Google test ID (replace for prod)
-const ADMOB_REWARDED_IOS =
-  process.env.EXPO_PUBLIC_ADMOB_REWARDED_IOS ??
-  "ca-app-pub-3940256099942544/1712485313"; // Google test ID (replace for prod)
+const ADMOB_REWARDED_ANDROID = "ca-app-pub-6765256613517786/4830091821";
+const ADMOB_REWARDED_IOS = "ca-app-pub-6765256613517786/4830091821";
 
 const AD_UNIT_ID = Platform.OS === "ios" ? ADMOB_REWARDED_IOS : ADMOB_REWARDED_ANDROID;
 const AD_DURATION = 5; // fallback simulation seconds

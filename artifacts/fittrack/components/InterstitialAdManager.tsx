@@ -22,10 +22,10 @@ try {
 }
 
 const androidAdUnitId = admobAvailable
-  ? (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID ?? TestIds?.INTERSTITIAL)
+  ? "ca-app-pub-6765256613517786/6711592661"
   : null;
 const iosAdUnitId = admobAvailable
-  ? (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS ?? TestIds?.INTERSTITIAL)
+  ? "ca-app-pub-6765256613517786/6711592661"
   : null;
 const adUnitId = Platform.OS === "ios" ? iosAdUnitId : androidAdUnitId;
 

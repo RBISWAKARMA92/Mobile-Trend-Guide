@@ -17,10 +17,10 @@ try {
 }
 
 const androidAdUnitId = admobAvailable
-  ? (process.env.EXPO_PUBLIC_ADMOB_BANNER_ANDROID ?? TestIds?.BANNER)
+  ? "ca-app-pub-6765256613517786/1082418501"
   : null;
 const iosAdUnitId = admobAvailable
-  ? (process.env.EXPO_PUBLIC_ADMOB_BANNER_IOS ?? TestIds?.BANNER)
+  ? "ca-app-pub-6765256613517786/1082418501"
   : null;
 const adUnitId = Platform.OS === "ios" ? iosAdUnitId : androidAdUnitId;
 
