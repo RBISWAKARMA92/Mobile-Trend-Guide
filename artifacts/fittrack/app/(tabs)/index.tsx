@@ -91,6 +91,12 @@ export default function HomeScreen() {
       icon: <Ionicons name="alarm-outline" size={26} color="#fff" />,
       bg: "#ef4444",
     },
+    {
+      id: "chat",
+      route: "/chat",
+      icon: <Ionicons name="sparkles" size={26} color="#fff" />,
+      bg: "#6d28d9",
+    },
   ];
 
   const toolLabels: Record<string, string> = {
@@ -103,6 +109,7 @@ export default function HomeScreen() {
     age: t.age,
     password: t.password,
     reminders: t.reminders ?? "Reminders",
+    chat: t.aiChat ?? "AI Friend",
   };
 
   const quickLinks: QuickLink[] = [

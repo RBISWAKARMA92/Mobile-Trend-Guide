@@ -114,6 +114,10 @@ export type Translations = {
   gemini?: string;
   chatgpt?: string;
   news?: string;
+  aiChat?: string;
+  aiWelcomeTitle?: string;
+  aiWelcomeSub?: string;
+  aiPlaceholder?: string;
 };
 
 export const translations: Record<string, Translations> = {
@@ -192,6 +196,10 @@ export const translations: Record<string, Translations> = {
     gemini: "Gemini",
     chatgpt: "ChatGPT",
     news: "News",
+    aiChat: "AI Friend",
+    aiWelcomeTitle: "Your Smart Friend",
+    aiWelcomeSub: "Ask me anything — in any language!",
+    aiPlaceholder: "Ask me anything...",
   },
   es: {
     appName: "Herramientas",
@@ -1138,6 +1146,10 @@ export const translations: Record<string, Translations> = {
     gemini: "जेमिनी",
     chatgpt: "चैटजीपीटी",
     news: "समाचार",
+    aiChat: "AI दोस्त",
+    aiWelcomeTitle: "आपका स्मार्ट दोस्त",
+    aiWelcomeSub: "किसी भी भाषा में कुछ भी पूछें!",
+    aiPlaceholder: "कुछ भी पूछें...",
   },
 
   bn: {
