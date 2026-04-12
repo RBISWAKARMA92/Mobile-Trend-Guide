@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
-import { PlayCircle, Leaf, BrainCircuit, Headphones, Globe, ArrowRight, Heart } from "lucide-react";
+import { PlayCircle, Leaf, Heart } from "lucide-react";
+
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.zenspace.dailytools";
 
 function scrollTo(id: string) {
   const el = document.getElementById(id);
@@ -126,28 +128,58 @@ export default function Home() {
             initial="initial"
             whileInView="whileInView"
             viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
           >
             {[
-              { icon: Heart, title: "Mood & Sleep", desc: "Gentle daily check-ins to understand your patterns without guilt." },
-              { icon: BrainCircuit, title: "Chant & Mala", desc: "A beautiful digital mala counter with haptic feedback for your daily practice." },
-              { icon: Leaf, title: "Breathing Guide", desc: "Visual pacing for box breathing and relaxation techniques." },
-              { icon: Globe, title: "30+ Languages", desc: "Hindi, Bengali, Tamil, Telugu, and more. Use the app in your mother tongue." },
-              { icon: Headphones, title: "Expense Tracker", desc: "Minimal, stress-free money tracking to keep your mind at ease." },
-              { icon: ArrowRight, title: "Habit Builder", desc: "Small steps. No broken streaks guilt. Just gentle encouragement." },
-            ].map((feature, i) => (
+              { icon: "🙏", title: "Chant Counter", desc: "Mala & Rosary counter with haptic feedback" },
+              { icon: "🤖", title: "AI Friend", desc: "Chat & voice Talk Mode with your AI companion" },
+              { icon: "💰", title: "Expense Tracker", desc: "Simple, stress-free money tracking" },
+              { icon: "📝", title: "Notes", desc: "Quick jot-down notes, always at hand" },
+              { icon: "🧮", title: "Calculator", desc: "Clean everyday calculator" },
+              { icon: "🔄", title: "Unit Converter", desc: "Convert length, weight, temp & more" },
+              { icon: "⏱️", title: "Timer", desc: "Countdown & stopwatch for focus sessions" },
+              { icon: "⚖️", title: "BMI Checker", desc: "Know your Body Mass Index instantly" },
+              { icon: "🎂", title: "Age Calculator", desc: "Find your exact age in seconds" },
+              { icon: "💡", title: "Tip Calculator", desc: "Split bills without the mental load" },
+              { icon: "🔐", title: "Password Gen", desc: "Strong, random passwords on demand" },
+              { icon: "🔔", title: "Reminders", desc: "Gentle nudges to keep you on track" },
+              { icon: "🎙️", title: "Voice Recorder", desc: "Record thoughts, ideas, meetings" },
+              { icon: "🎵", title: "Music Player", desc: "Calm background music while you work" },
+              { icon: "🎬", title: "Video Recorder", desc: "Quick video capture from within the app" },
+              { icon: "🧒", title: "Kids Zone", desc: "Safe, fun space for little ones" },
+              { icon: "🌬️", title: "Breathing Guide", desc: "Box breathing & relaxation visuals" },
+              { icon: "🔦", title: "Flashlight", desc: "Instant torch at your fingertips" },
+              { icon: "🌍", title: "World Clock", desc: "Track time across any timezone" },
+              { icon: "📷", title: "QR Code", desc: "Scan & generate QR codes easily" },
+              { icon: "😊", title: "Mood Tracker", desc: "Daily check-ins without judgment" },
+              { icon: "🌙", title: "Sleep Log", desc: "Track your rest for better mornings" },
+              { icon: "🔥", title: "Habit Builder", desc: "Small steps, no streak guilt" },
+            ].map((tool, i) => (
               <motion.div key={i} variants={staggerItem}>
-                <Card className="bg-card/50 border-border/50 hover:bg-card hover:shadow-lg transition-all duration-300 h-full border-none shadow-none">
-                  <CardContent className="p-8 space-y-4">
-                    <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                      <feature.icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="text-xl font-serif text-primary">{feature.title}</h3>
-                    <p className="text-primary/70 leading-relaxed">{feature.desc}</p>
-                  </CardContent>
-                </Card>
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid={`tool-card-${i}`}
+                  className="block group"
+                >
+                  <Card className="bg-card/50 border-border/30 hover:border-secondary/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full cursor-pointer">
+                    <CardContent className="p-5 space-y-2">
+                      <div className="text-3xl mb-3">{tool.icon}</div>
+                      <h3 className="text-base font-semibold text-primary group-hover:text-secondary transition-colors">{tool.title}</h3>
+                      <p className="text-xs text-primary/60 leading-relaxed">{tool.desc}</p>
+                    </CardContent>
+                  </Card>
+                </a>
               </motion.div>
             ))}
+          </motion.div>
+          <motion.div {...fadeIn} className="mt-10 text-center">
+            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 h-13">
+                <PlayCircle className="mr-2 w-5 h-5" /> Download Free on Google Play
+              </Button>
+            </a>
           </motion.div>
         </div>
       </section>
