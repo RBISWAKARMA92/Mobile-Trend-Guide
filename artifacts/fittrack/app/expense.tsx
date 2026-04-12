@@ -154,24 +154,51 @@ export default function ExpenseScreen() {
           ))}
         </View>
 
-        {/* Category breakdown */}
+        {/* Category Analytics Chart */}
         {byCat.length > 0 && (
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>By Category</Text>
-            {byCat.map((c) => (
-              <View key={c.id} style={styles.catBreakdown}>
-                <Text style={styles.catEmoji}>{c.emoji}</Text>
-                <View style={styles.catBarWrap}>
-                  <View style={styles.catBarLabel}>
-                    <Text style={[styles.catLabel, { color: colors.foreground }]}>{c.label}</Text>
-                    <Text style={[styles.catAmt, { color: colors.primary }]}>₹{fmt(c.sum)}</Text>
-                  </View>
-                  <View style={[styles.catBarTrack, { backgroundColor: colors.muted }]}>
-                    <View style={[styles.catBarFill, { backgroundColor: c.color, width: `${Math.round((c.sum / total) * 100)}%` as any }]} />
+            <View style={styles.chartHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>📊 Spending Breakdown</Text>
+              <Text style={[styles.chartSub, { color: colors.mutedForeground }]}>
+                {byCat.length} categor{byCat.length === 1 ? "y" : "ies"}
+              </Text>
+            </View>
+
+            {/* Mini color dots legend */}
+            <View style={styles.legendRow}>
+              {byCat.slice(0, 5).map((c) => (
+                <View key={c.id} style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: c.color }]} />
+                  <Text style={[styles.legendLabel, { color: colors.mutedForeground }]}>{c.emoji}</Text>
+                </View>
+              ))}
+            </View>
+
+            {byCat.map((c) => {
+              const pct = total > 0 ? Math.round((c.sum / total) * 100) : 0;
+              return (
+                <View key={c.id} style={styles.catBreakdown}>
+                  <Text style={styles.catEmoji}>{c.emoji}</Text>
+                  <View style={styles.catBarWrap}>
+                    <View style={styles.catBarLabel}>
+                      <Text style={[styles.catLabel, { color: colors.foreground }]}>{c.label}</Text>
+                      <View style={styles.catAmtRow}>
+                        <Text style={[styles.catPct, { color: c.color }]}>{pct}%</Text>
+                        <Text style={[styles.catAmt, { color: colors.primary }]}>₹{fmt(c.sum)}</Text>
+                      </View>
+                    </View>
+                    <View style={[styles.catBarTrack, { backgroundColor: colors.muted }]}>
+                      <View
+                        style={[
+                          styles.catBarFill,
+                          { backgroundColor: c.color, width: `${pct}%` as any },
+                        ]}
+                      />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
@@ -287,7 +314,15 @@ const styles = StyleSheet.create({
   filterBtn: { flex: 1, paddingVertical: 10, borderRadius: 20, alignItems: "center", borderWidth: 1 },
   filterText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   card: { borderRadius: 20, borderWidth: 1, padding: 16, gap: 14 },
-  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  sectionTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  chartHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
+  chartSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  legendRow: { flexDirection: "row", gap: 12, marginBottom: 10, flexWrap: "wrap" },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendLabel: { fontSize: 14 },
+  catAmtRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  catPct: { fontSize: 12, fontFamily: "Inter_700Bold" },
   catBreakdown: { flexDirection: "row", alignItems: "center", gap: 12 },
   catEmoji: { fontSize: 22, width: 30 },
   catBarWrap: { flex: 1, gap: 4 },

@@ -18,6 +18,9 @@ import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ActivityProvider } from "@/context/ActivityContext";
 import { usePreloadInterstitial } from "@/components/InterstitialAdManager";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const ONBOARDING_KEY = "zenspace_seen_onboarding_v1";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,7 +31,7 @@ const AUTH_SCREENS = ["login", "otp-verify"];
 function RootLayoutNav() {
   const { t } = useLanguage();
   const { token, isLoading } = useAuth();
-  usePreloadInterstitial(); // pre-load interstitial ad on startup
+  usePreloadInterstitial();
   const router = useRouter();
   const segments = useSegments();
 
@@ -36,9 +39,17 @@ function RootLayoutNav() {
     if (isLoading) return;
     const currentSegment = segments[0] as string | undefined;
     const inAuthScreen = AUTH_SCREENS.includes(currentSegment ?? "");
-    // Only redirect logged-in users away from auth screens; guests can use the app freely
+    const inOnboarding = currentSegment === "onboarding";
+
     if (token && inAuthScreen) {
       router.replace("/");
+      return;
+    }
+
+    if (!inOnboarding) {
+      AsyncStorage.getItem(ONBOARDING_KEY).then((seen) => {
+        if (!seen) router.replace("/onboarding");
+      });
     }
   }, [token, isLoading, segments]);
 
@@ -100,6 +111,8 @@ function RootLayoutNav() {
       <Stack.Screen name="reminders" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
       <Stack.Screen name="chant-counter" options={{ headerShown: false }} />
+      <Stack.Screen name="breathing" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false, animation: "fade" }} />
     </Stack>
   );
 }

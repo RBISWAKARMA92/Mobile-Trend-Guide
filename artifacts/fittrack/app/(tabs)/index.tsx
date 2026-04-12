@@ -2,8 +2,9 @@ import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Animated,
   Linking,
   Platform,
   Pressable,
@@ -13,6 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -21,8 +23,12 @@ import { useColors } from "@/hooks/useColors";
 import RewardedAdModal from "@/components/RewardedAdModal";
 import BannerAdView from "@/components/BannerAdView";
 import { trackToolOpen } from "@/components/InterstitialAdManager";
+import { trackToolForRating } from "@/components/RatingPrompt";
 import { getComedyLine } from "@/constants/comedyLines";
 import { getTodayAffirmation, moodAffirmations } from "@/constants/affirmations";
+
+const STREAK_DATE_KEY = "@zenspace_streak_date";
+const STREAK_COUNT_KEY = "@zenspace_streak_count";
 
 const MOODS = [
   { emoji: "😄", label: "Great", value: 1 },
@@ -98,6 +104,31 @@ export default function HomeScreen() {
   const [showShareAdModal, setShowShareAdModal] = useState(false);
   const [comedyIdx, setComedyIdx] = useState(() => Math.floor(Math.random() * 7));
   const [moodMsg, setMoodMsg] = useState<string | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [streakMsg, setStreakMsg] = useState<string | null>(null);
+  const streakAnim = useState(new Animated.Value(0))[0];
+
+  useEffect(() => {
+    (async () => {
+      const today = new Date().toDateString();
+      const lastDate = await AsyncStorage.getItem(STREAK_DATE_KEY);
+      const lastCount = parseInt((await AsyncStorage.getItem(STREAK_COUNT_KEY)) ?? "0", 10);
+
+      let newStreak = lastCount;
+      if (lastDate !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        newStreak = lastDate === yesterday.toDateString() ? lastCount + 1 : 1;
+        await AsyncStorage.setItem(STREAK_DATE_KEY, today);
+        await AsyncStorage.setItem(STREAK_COUNT_KEY, String(newStreak));
+        if (newStreak > 1) {
+          setStreakMsg(`🔥 Day ${newStreak} streak! Keep it up!`);
+          setTimeout(() => setStreakMsg(null), 4000);
+        }
+      }
+      setStreak(newStreak);
+    })();
+  }, []);
 
   const affirmation = getTodayAffirmation();
   const lines = getComedyLine(langCode);
@@ -123,6 +154,7 @@ export default function HomeScreen() {
     { id: "music", route: "/music", bg: "#059669", label: t.music ?? "Music", icon: "musical-notes", iconLib: "Ionicons" },
     { id: "video-recorder", route: "/video-recorder", bg: "#0284c7", label: t.videoRecorder ?? "Video", icon: "videocam", iconLib: "Ionicons" },
     { id: "kids-zone", route: "/kids-zone", bg: "#f43f5e", label: t.kidsZone ?? "Kids", iconEmoji: "🧒" },
+    { id: "breathing", route: "/breathing", bg: "#4f46e5", label: "Breathing", iconEmoji: "🌬️" },
     { id: "flashlight", route: "/flashlight", bg: "#d97706", label: "Flashlight", icon: "flashlight", iconLib: "Ionicons" },
     { id: "world-clock", route: "/world-clock", bg: "#0891b2", label: "World Clock", icon: "earth", iconLib: "Ionicons" },
     { id: "qr-code", route: "/qr-code", bg: "#7c3aed", label: "QR Code", icon: "qr-code", iconLib: "Ionicons" },
@@ -177,6 +209,14 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.headerRight}>
+          {streak > 0 && (
+            <Pressable
+              style={[styles.streakBadge, { backgroundColor: "#f59e0b20", borderColor: "#f59e0b50" }]}
+              onPress={() => setStreakMsg(`🔥 ${streak}-day streak! Open the app daily to keep it going.`)}
+            >
+              <Text style={styles.streakText}>🔥 {streak}</Text>
+            </Pressable>
+          )}
           {user ? (
             <>
               {(adStatus === null || (adStatus?.remaining_today ?? 1) > 0) &&
@@ -279,6 +319,13 @@ export default function HomeScreen() {
           ) : null}
         </View>
 
+        {/* Streak toast */}
+        {streakMsg ? (
+          <View style={[styles.streakToast, { backgroundColor: "#f59e0b", borderColor: "#d97706" }]}>
+            <Text style={styles.streakToastText}>{streakMsg}</Text>
+          </View>
+        ) : null}
+
         {/* Featured Tools 2×2 */}
         <Text style={[styles.section, { color: colors.mutedForeground }]}>FEATURED TOOLS</Text>
         <View style={styles.featuredGrid}>
@@ -288,6 +335,7 @@ export default function HomeScreen() {
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 trackToolOpen(subscription?.plan === "pro");
+                trackToolForRating(f.id);
                 router.push(f.route as any);
               }}
               style={({ pressed }) => [styles.featCard, { opacity: pressed ? 0.85 : 1 }]}
@@ -310,6 +358,7 @@ export default function HomeScreen() {
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 trackToolOpen(subscription?.plan === "pro");
+                trackToolForRating(tool.id);
                 router.push(tool.route as any);
               }}
               style={({ pressed }) => [styles.toolCell, { opacity: pressed ? 0.7 : 1 }]}
@@ -444,6 +493,16 @@ const styles = StyleSheet.create({
   signInText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
   langBtn: { paddingHorizontal: 11, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   langCode: { fontSize: 12, fontFamily: "Inter_700Bold" },
+  streakBadge: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 9, paddingVertical: 6, borderRadius: 20, borderWidth: 1,
+  },
+  streakText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#d97706" },
+  streakToast: {
+    borderRadius: 12, padding: 12, borderWidth: 1,
+    alignItems: "center",
+  },
+  streakToastText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff", textAlign: "center" },
 
   // Scroll
   scroll: { paddingHorizontal: 16, paddingTop: 4, gap: 12 },

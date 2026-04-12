@@ -924,6 +924,25 @@ export default function ChatScreen() {
         </View>
       ) : null}
 
+      {/* Zero-credit upgrade bar */}
+      {user && user.credits === 0 && (
+        <View style={[styles.zeroCreditBar, { backgroundColor: "#7c3aed10", borderColor: "#7c3aed40" }]}>
+          <Text style={[styles.zeroCreditLabel, { color: colors.foreground }]}>⚡ Credits: 0</Text>
+          <Pressable
+            onPress={() => setShowAdModal(true)}
+            style={[styles.zeroCreditBtn, { backgroundColor: "#f59e0b" }]}
+          >
+            <Text style={styles.zeroCreditBtnText}>📺 Watch Ad +10</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/subscription")}
+            style={[styles.zeroCreditBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={styles.zeroCreditBtnText}>⚡ Go Pro</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Input row */}
       <View
         style={[
@@ -1052,6 +1071,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   interimText: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular", fontStyle: "italic" },
+  zeroCreditBar: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 14, paddingVertical: 10, gap: 8, borderTopWidth: 1,
+    flexWrap: "wrap",
+  },
+  zeroCreditLabel: { fontSize: 13, fontFamily: "Inter_700Bold", flex: 1 },
+  zeroCreditBtn: {
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+  },
+  zeroCreditBtnText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#fff" },
   inputRow: {
     flexDirection: "row", alignItems: "flex-end",
     paddingHorizontal: 12, paddingTop: 12, gap: 8,
