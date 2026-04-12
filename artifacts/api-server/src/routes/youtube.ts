@@ -18,7 +18,7 @@ function mapVideo(item: any) {
 
 router.get("/youtube/search", async (req, res) => {
   try {
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) return res.status(503).json({ error: "YouTube API not configured" });
     const q = (req.query.q as string)?.trim();
     if (!q) return res.status(400).json({ error: "Query required" });
@@ -37,7 +37,7 @@ router.get("/youtube/search", async (req, res) => {
 
 router.get("/youtube/trending", async (req, res) => {
   try {
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) return res.status(503).json({ error: "YouTube API not configured" });
     const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=IN&videoCategoryId=10&maxResults=20&key=${apiKey}`;
     const r = await fetch(url);
