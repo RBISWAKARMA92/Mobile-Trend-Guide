@@ -6,6 +6,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Card, CardContent } from "@/components/ui/card";
 import { PlayCircle, Leaf, BrainCircuit, Headphones, Globe, ArrowRight, Heart } from "lucide-react";
 
+function scrollTo(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth" });
+}
+
 export default function Home() {
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -37,10 +42,10 @@ export default function Home() {
             ZenSpace
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#features" className="hover:text-secondary transition-colors">Tools</a>
-            <a href="#ai" className="hover:text-secondary transition-colors">AI Guide</a>
-            <a href="#pricing" className="hover:text-secondary transition-colors">Plans</a>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">
+            <button onClick={() => scrollTo("features")} className="hover:text-secondary transition-colors cursor-pointer">Tools</button>
+            <button onClick={() => scrollTo("ai")} className="hover:text-secondary transition-colors cursor-pointer">AI Guide</button>
+            <button onClick={() => scrollTo("pricing")} className="hover:text-secondary transition-colors cursor-pointer">Plans</button>
+            <Button onClick={() => scrollTo("pricing")} className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">
               Get the App
             </Button>
           </div>
