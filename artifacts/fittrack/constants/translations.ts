@@ -100,6 +100,20 @@ export type Translations = {
   yourAge: string;
   bmiResult: string;
   tipResult: string;
+  quickLinks?: string;
+  reminders?: string;
+  addReminder?: string;
+  reminderTitle?: string;
+  reminderTime?: string;
+  setReminder?: string;
+  noReminders?: string;
+  reminderSet?: string;
+  reminderDeleted?: string;
+  youtube?: string;
+  google?: string;
+  gemini?: string;
+  chatgpt?: string;
+  news?: string;
 };
 
 export const translations: Record<string, Translations> = {
@@ -164,6 +178,20 @@ export const translations: Record<string, Translations> = {
     yourAge: "Your Age",
     bmiResult: "Your BMI",
     tipResult: "Tip Amount",
+    quickLinks: "Quick Links",
+    reminders: "Reminders",
+    addReminder: "Add Reminder",
+    reminderTitle: "Title",
+    reminderTime: "Date & Time",
+    setReminder: "Set Reminder",
+    noReminders: "No reminders yet. Tap + to add one.",
+    reminderSet: "Reminder set!",
+    reminderDeleted: "Reminder deleted",
+    youtube: "YouTube",
+    google: "Google",
+    gemini: "Gemini",
+    chatgpt: "ChatGPT",
+    news: "News",
   },
   es: {
     appName: "Herramientas",
@@ -1096,6 +1124,20 @@ export const translations: Record<string, Translations> = {
     yourAge: "आपकी उम्र",
     bmiResult: "आपका BMI",
     tipResult: "टिप राशि",
+    quickLinks: "त्वरित लिंक",
+    reminders: "रिमाइंडर",
+    addReminder: "रिमाइंडर जोड़ें",
+    reminderTitle: "शीर्षक",
+    reminderTime: "तारीख और समय",
+    setReminder: "रिमाइंडर सेट करें",
+    noReminders: "कोई रिमाइंडर नहीं। + दबाकर जोड़ें।",
+    reminderSet: "रिमाइंडर सेट हो गया!",
+    reminderDeleted: "रिमाइंडर हटाया गया",
+    youtube: "यूट्यूब",
+    google: "गूगल",
+    gemini: "जेमिनी",
+    chatgpt: "चैटजीपीटी",
+    news: "समाचार",
   },
 
   bn: {
