@@ -16,10 +16,19 @@ import {
   TextInput,
   View,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
+import BannerAdView from "@/components/BannerAdView";
+import RewardedAdModal from "@/components/RewardedAdModal";
+
+const YT_FREE_DAILY = 5;
+const YT_AD_BONUS = 5;
+const YT_MAX_AD_UNLOCKS = 3;
+const YT_STORAGE_KEY = "yt_search_quota";
 
 const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -61,6 +70,8 @@ export default function MusicScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const router = useRouter();
+  const { subscription, rewardAd } = useAuth();
+  const isPro = subscription?.plan === "pro";
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -87,10 +98,32 @@ export default function MusicScreen() {
   const [ytLoading, setYtLoading] = useState(false);
   const [ytError, setYtError] = useState<string | null>(null);
 
+  // YouTube monetization state
+  const [ytSearchesLeft, setYtSearchesLeft] = useState(YT_FREE_DAILY);
+  const [ytAdUnlocksLeft, setYtAdUnlocksLeft] = useState(YT_MAX_AD_UNLOCKS);
+  const [showYtPaywall, setShowYtPaywall] = useState(false);
+  const [showYtRewardAd, setShowYtRewardAd] = useState(false);
+
   useEffect(() => {
     Audio.setAudioModeAsync({ staysActiveInBackground: true, playsInSilentModeIOS: true });
     return () => { stopSound(); };
   }, []);
+
+  // Load YouTube daily quota from storage
+  useEffect(() => {
+    if (isPro) return;
+    AsyncStorage.getItem(YT_STORAGE_KEY).then((raw) => {
+      if (!raw) return;
+      try {
+        const saved = JSON.parse(raw);
+        const today = new Date().toDateString();
+        if (saved.date === today) {
+          setYtSearchesLeft(saved.searchesLeft ?? YT_FREE_DAILY);
+          setYtAdUnlocksLeft(saved.adUnlocksLeft ?? YT_MAX_AD_UNLOCKS);
+        }
+      } catch {}
+    });
+  }, [isPro]);
 
   // Marquee for long song names
   useEffect(() => {
@@ -156,8 +189,29 @@ export default function MusicScreen() {
     }
   }
 
+  function saveYtQuota(searchesLeft: number, adUnlocksLeft: number) {
+    AsyncStorage.setItem(YT_STORAGE_KEY, JSON.stringify({
+      date: new Date().toDateString(),
+      searchesLeft,
+      adUnlocksLeft,
+    }));
+  }
+
   async function searchYouTube(q: string) {
     if (!q.trim()) { fetchYTTrending(); return; }
+
+    // Enforce daily limit for free users
+    if (!isPro) {
+      if (ytSearchesLeft <= 0) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        setShowYtPaywall(true);
+        return;
+      }
+      const newLeft = ytSearchesLeft - 1;
+      setYtSearchesLeft(newLeft);
+      saveYtQuota(newLeft, ytAdUnlocksLeft);
+    }
+
     setYtLoading(true);
     setYtError(null);
     try {
@@ -170,6 +224,17 @@ export default function MusicScreen() {
     } finally {
       setYtLoading(false);
     }
+  }
+
+  async function handleYtAdRewarded() {
+    await rewardAd();
+    const newUnlocks = Math.max(0, ytAdUnlocksLeft - 1);
+    const newSearches = ytSearchesLeft + YT_AD_BONUS;
+    setYtAdUnlocksLeft(newUnlocks);
+    setYtSearchesLeft(newSearches);
+    saveYtQuota(newSearches, newUnlocks);
+    setShowYtPaywall(false);
+    setShowYtRewardAd(false);
   }
 
   function formatMs(ms: number) {
@@ -464,21 +529,37 @@ export default function MusicScreen() {
         {/* ── YouTube Tab ─────────────────────────────────────────── */}
         {tab === "YouTube" && (
           <>
-            <View style={[styles.spotifySearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Ionicons name="search" size={18} color={colors.mutedForeground} />
-              <TextInput
-                style={[styles.spotifyInput, { color: colors.foreground }]}
-                placeholder="Search music videos…"
-                placeholderTextColor={colors.mutedForeground}
-                value={ytQuery}
-                onChangeText={setYtQuery}
-                onSubmitEditing={() => searchYouTube(ytQuery)}
-                returnKeyType="search"
-              />
-              {ytQuery.length > 0 && (
-                <Pressable onPress={() => { setYtQuery(""); fetchYTTrending(); }} hitSlop={8}>
-                  <Feather name="x" size={16} color={colors.mutedForeground} />
-                </Pressable>
+            {/* Search bar + quota badge */}
+            <View style={{ gap: 6 }}>
+              <View style={[styles.spotifySearch, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Ionicons name="search" size={18} color={colors.mutedForeground} />
+                <TextInput
+                  style={[styles.spotifyInput, { color: colors.foreground }]}
+                  placeholder="Search music videos…"
+                  placeholderTextColor={colors.mutedForeground}
+                  value={ytQuery}
+                  onChangeText={setYtQuery}
+                  onSubmitEditing={() => searchYouTube(ytQuery)}
+                  returnKeyType="search"
+                />
+                {ytQuery.length > 0 && (
+                  <Pressable onPress={() => { setYtQuery(""); fetchYTTrending(); }} hitSlop={8}>
+                    <Feather name="x" size={16} color={colors.mutedForeground} />
+                  </Pressable>
+                )}
+              </View>
+              {!isPro && (
+                <View style={styles.ytQuotaRow}>
+                  <Ionicons name="search" size={12} color={ytSearchesLeft <= 1 ? "#ef4444" : colors.mutedForeground} />
+                  <Text style={[styles.ytQuotaText, { color: ytSearchesLeft <= 1 ? "#ef4444" : colors.mutedForeground }]}>
+                    {ytSearchesLeft <= 0 ? "Daily limit reached" : `${ytSearchesLeft} free searches left today`}
+                  </Text>
+                  {ytSearchesLeft <= 2 && (
+                    <Pressable onPress={() => setShowYtPaywall(true)} hitSlop={8}>
+                      <Text style={[styles.ytQuotaLink, { color: colors.primary }]}>Get more →</Text>
+                    </Pressable>
+                  )}
+                </View>
               )}
             </View>
 
@@ -551,6 +632,70 @@ export default function MusicScreen() {
                 </Text>
               </View>
             )}
+
+            {/* Banner ad for free users */}
+            {!isPro && Platform.OS !== "web" && (
+              <View style={{ alignItems: "center", marginTop: 8 }}>
+                <BannerAdView />
+              </View>
+            )}
+
+            {/* Free user upgrade banner (web fallback / always visible teaser) */}
+            {!isPro && (
+              <Pressable
+                onPress={() => setShowYtPaywall(true)}
+                style={[styles.ytUpgradeBanner, { backgroundColor: "#FF000012", borderColor: "#FF000040" }]}
+              >
+                <Ionicons name="logo-youtube" size={20} color="#FF0000" />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.ytUpgradeTitle, { color: colors.foreground }]}>Go Pro — Unlimited YouTube Searches</Text>
+                  <Text style={[styles.ytUpgradeSub, { color: colors.mutedForeground }]}>
+                    Free: {YT_FREE_DAILY}/day · Watch ad: +{YT_AD_BONUS} · Pro: ∞
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#FF0000" />
+              </Pressable>
+            )}
+
+            {/* Paywall bottom sheet */}
+            {showYtPaywall && (
+              <View style={[styles.ytPaywall, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.ytPaywallTitle, { color: colors.foreground }]}>🔍 Daily Search Limit Reached</Text>
+                <Text style={[styles.ytPaywallSub, { color: colors.mutedForeground }]}>
+                  You've used all {YT_FREE_DAILY} free YouTube searches for today. Reset at midnight.
+                </Text>
+
+                {ytAdUnlocksLeft > 0 && (
+                  <Pressable
+                    onPress={() => { setShowYtPaywall(false); setShowYtRewardAd(true); }}
+                    style={[styles.ytPaywallBtn, { backgroundColor: "#FF0000" }]}
+                  >
+                    <Ionicons name="play-circle" size={20} color="#fff" />
+                    <Text style={styles.ytPaywallBtnText}>Watch Ad → +{YT_AD_BONUS} Searches ({ytAdUnlocksLeft} left today)</Text>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  onPress={() => { setShowYtPaywall(false); router.push("/subscription"); }}
+                  style={[styles.ytPaywallBtn, { backgroundColor: colors.primary }]}
+                >
+                  <Ionicons name="star" size={20} color="#fff" />
+                  <Text style={styles.ytPaywallBtnText}>Go Pro — Unlimited Searches ₹399/yr</Text>
+                </Pressable>
+
+                <Pressable onPress={() => setShowYtPaywall(false)} style={{ alignItems: "center", paddingTop: 4 }}>
+                  <Text style={[{ fontSize: 13, fontFamily: "Inter_400Regular" }, { color: colors.mutedForeground }]}>Dismiss</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Rewarded ad modal */}
+            <RewardedAdModal
+              visible={showYtRewardAd}
+              onClose={() => setShowYtRewardAd(false)}
+              onRewarded={handleYtAdRewarded}
+              creditsEarned={10}
+            />
           </>
         )}
 
@@ -771,4 +916,27 @@ const styles = StyleSheet.create({
   ytTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold", lineHeight: 18 },
   ytChannel: { fontSize: 11, fontFamily: "Inter_400Regular" },
   ytBtn: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+
+  // YouTube monetization styles
+  ytQuotaRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 4 },
+  ytQuotaText: { fontSize: 12, fontFamily: "Inter_400Regular", flex: 1 },
+  ytQuotaLink: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+
+  ytUpgradeBanner: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    borderRadius: 16, borderWidth: 1, padding: 14, marginTop: 4,
+  },
+  ytUpgradeTitle: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  ytUpgradeSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+
+  ytPaywall: {
+    borderRadius: 24, borderWidth: 1, padding: 20, gap: 14, marginTop: 8,
+  },
+  ytPaywallTitle: { fontSize: 18, fontFamily: "Inter_700Bold", textAlign: "center" },
+  ytPaywallSub: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+  ytPaywallBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16,
+  },
+  ytPaywallBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", color: "#fff", flex: 1 },
 });
