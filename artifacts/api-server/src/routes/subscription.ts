@@ -25,7 +25,7 @@ const PLANS = [
     badge: null,
     features: [
       "50 AI chat messages total",
-      "All 13 tools included",
+      "All 23+ tools included",
       "Voice & video recorder",
       "Music player",
     ],
@@ -45,7 +45,7 @@ const PLANS = [
     badge: null,
     features: [
       "500 AI chat credits/month",
-      "All 13 tools included",
+      "All 23+ tools included",
       "Voice & video recorder",
       "Music player",
       "Credits refresh every month",
@@ -66,7 +66,7 @@ const PLANS = [
     badge: "Best Value",
     features: [
       "1500 AI chat credits (500/month)",
-      "All 13 tools included",
+      "All 23+ tools included",
       "Voice & video recorder",
       "Music player",
       "Credits refresh monthly",
@@ -87,7 +87,7 @@ const PLANS = [
     badge: "32% Off",
     features: [
       "6000 AI chat credits (500/month)",
-      "All 13 tools included",
+      "All 23+ tools included",
       "Voice & video recorder",
       "Music player",
       "Credits refresh monthly",
