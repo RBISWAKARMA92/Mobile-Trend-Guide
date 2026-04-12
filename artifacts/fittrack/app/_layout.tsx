@@ -86,6 +86,16 @@ function RootLayoutNav() {
         name="language"
         options={{ headerShown: true, title: t.selectLanguage, headerBackTitle: "" }}
       />
+      <Stack.Screen name="kids-zone" options={{ headerShown: false }} />
+      <Stack.Screen name="flashlight" options={{ headerShown: false }} />
+      <Stack.Screen name="expense" options={{ headerShown: false }} />
+      <Stack.Screen name="world-clock" options={{ headerShown: false }} />
+      <Stack.Screen name="qr-code" options={{ headerShown: false }} />
+      <Stack.Screen name="voice-recorder" options={{ headerShown: false }} />
+      <Stack.Screen name="video-recorder" options={{ headerShown: false }} />
+      <Stack.Screen name="music" options={{ headerShown: false }} />
+      <Stack.Screen name="reminders" options={{ headerShown: false }} />
+      <Stack.Screen name="chat" options={{ headerShown: false }} />
     </Stack>
   );
 }

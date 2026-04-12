@@ -123,6 +123,30 @@ export default function HomeScreen() {
       icon: <Text style={{ fontSize: 26 }}>🧒</Text>,
       bg: "#f43f5e",
     },
+    {
+      id: "flashlight",
+      route: "/flashlight",
+      icon: <Ionicons name="flashlight" size={26} color="#fff" />,
+      bg: "#d97706",
+    },
+    {
+      id: "expense",
+      route: "/expense",
+      icon: <Ionicons name="wallet-outline" size={26} color="#fff" />,
+      bg: "#16a34a",
+    },
+    {
+      id: "worldClock",
+      route: "/world-clock",
+      icon: <Ionicons name="earth" size={26} color="#fff" />,
+      bg: "#0891b2",
+    },
+    {
+      id: "qrCode",
+      route: "/qr-code",
+      icon: <Ionicons name="qr-code" size={26} color="#fff" />,
+      bg: "#7c3aed",
+    },
   ];
 
   const toolLabels: Record<string, string> = {
@@ -140,6 +164,10 @@ export default function HomeScreen() {
     music: t.music ?? "Music",
     videoRecorder: t.videoRecorder ?? "Video Recorder",
     kidsZone: t.kidsZone ?? "Kids Zone",
+    flashlight: "Flashlight",
+    expense: "Expenses",
+    worldClock: "World Clock",
+    qrCode: "QR Code",
   };
 
   const quickLinks: QuickLink[] = [
