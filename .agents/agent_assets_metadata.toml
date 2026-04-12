@@ -1,8 +1,49 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "Q8NBbE1Hhkq43kkSvSQ0b"
 uri = "file://artifacts/fittrack/assets/images/icon.png"
 type = "image"
 title = "generated_image"
+
+[[generated]]
+id = "WWoXH8Zf60RF2uxwd4ZzU"
+uri = "file://attached_assets/generated_images/zenspace_feature_graphic.png"
+type = "image"
+title = "zenspace feature graphic"
+
+[[generated]]
+id = "e4SH90-ipw6spKsLH2eNV"
+uri = "file://attached_assets/generated_images/zenspace_icon_512.png"
+type = "image"
+title = "zenspace icon 512"
+
+[[generated]]
+id = "wtl-D4SIR2-s4KG52grSu"
+uri = "file://attached_assets/generated_images/zenspace_screenshot_bg.png"
+type = "image"
+title = "zenspace screenshot background"
+
+[[outputs]]
+id = "xwx6jQsi7eGWliLTETcM4"
+uri = "file://attached_assets/generated_images/zenspace_feature_graphic.png"
+type = "image"
+title = "Feature Graphic (1024×500)"
+
+[[outputs]]
+id = "39zLg5OiitOlOl8_wneNP"
+uri = "file://attached_assets/generated_images/zenspace_icon_512.png"
+type = "image"
+title = "High-Res Icon (512×512)"
+
+[[outputs]]
+id = "bDU6oTrOdtQyqzcK0Cupv"
+uri = "file://attached_assets/generated_images/zenspace_screenshot_bg.png"
+type = "image"
+title = "Screenshot Background (Portrait)"
+
+[[outputs]]
+id = "mpZdEJvK_sAS3_AybNxmj"
+uri = "file://attached_assets/PLAY_STORE_LISTING.md"
+type = "text"
+title = "Complete Play Store Listing"
