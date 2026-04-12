@@ -12,6 +12,7 @@ import {
   Animated,
   Easing,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -20,6 +21,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -151,6 +153,34 @@ const VOICE_COMMANDS: VoiceCommand[] = [
   },
 ];
 
+// YouTube patterns — handled separately (opens in-app WebView, not a route)
+const YOUTUBE_VOICE_PATTERNS = [
+  "play on youtube", "youtube par chalao", "youtube mein chalao",
+  "youtube pe chalao", "youtube par play", "search on youtube",
+  "youtube search", "youtube par dhundo", "open youtube",
+  "watch on youtube", "youtube par dekhna", "youtube par dikhao",
+];
+
+function detectYoutubeCommand(text: string): string | null {
+  const lower = text.toLowerCase().trim();
+  for (const pattern of YOUTUBE_VOICE_PATTERNS) {
+    if (lower.includes(pattern)) {
+      const query = lower
+        .replace(pattern, "")
+        .replace(/\b(play|watch|search|open|find|show|chalao|dhundo|dekhna|dikhao)\b/g, "")
+        .trim();
+      return encodeURIComponent(query || "latest trending videos");
+    }
+  }
+  // "play [X] on youtube"
+  const ytMatch = lower.match(/play\s+(.+?)\s+on\s+youtube/);
+  if (ytMatch) return encodeURIComponent(ytMatch[1]);
+  // "[X] youtube mein chalao"
+  const ytMatch2 = lower.match(/(.+?)\s+(?:youtube|yt)\s+(?:mein|par|pe|on)\s*/);
+  if (ytMatch2) return encodeURIComponent(ytMatch2[1].trim());
+  return null;
+}
+
 function detectVoiceCommand(text: string): VoiceCommand | null {
   const lower = text.toLowerCase().trim();
   for (const cmd of VOICE_COMMANDS) {
@@ -176,6 +206,7 @@ export default function ChatScreen() {
   const [streamText, setStreamText] = useState("");
   const [commandToast, setCommandToast] = useState<string | null>(null);
   const toastAnim = useRef(new Animated.Value(0)).current;
+  const [youtubeUrl, setYoutubeUrl] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   // Voice input state
@@ -276,7 +307,15 @@ export default function ChatScreen() {
     if (isListening) ExpoSpeechRecognitionModule.stop();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // ── Voice Command Detection ──────────────────────────────────────────────
+    // ── YouTube in-app command ───────────────────────────────────────────────
+    const ytQuery = detectYoutubeCommand(text);
+    if (ytQuery) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showCommandToast("Opening YouTube…");
+      setYoutubeUrl(`https://www.youtube.com/results?search_query=${ytQuery}`);
+      return;
+    }
+    // ── App navigation voice commands ─────────────────────────────────────────
     const cmd = detectVoiceCommand(text);
     if (cmd) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -327,6 +366,13 @@ export default function ChatScreen() {
           if (line.startsWith("data: ")) {
             try {
               const json = JSON.parse(line.slice(6));
+              if (json.youtubeQuery) {
+                // Backend says: open YouTube in-app
+                setLoading(false);
+                setStreamText("");
+                setYoutubeUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(json.youtubeQuery)}`);
+                return;
+              }
               if (json.done) break;
               if (json.content) {
                 fullText += json.content;
@@ -484,6 +530,39 @@ export default function ChatScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* ── YouTube In-App Player Modal ─────────────────────── */}
+      <Modal visible={!!youtubeUrl} animationType="slide" onRequestClose={() => setYoutubeUrl(null)}>
+        <View style={styles.ytContainer}>
+          <View style={[styles.ytHeader, { backgroundColor: colors.card, paddingTop: insets.top + 8 }]}>
+            <Pressable onPress={() => setYoutubeUrl(null)} style={styles.ytCloseBtn}>
+              <Feather name="x" size={22} color={colors.foreground} />
+            </Pressable>
+            <View style={styles.ytTitleRow}>
+              <Ionicons name="logo-youtube" size={20} color="#FF0000" />
+              <Text style={[styles.ytTitle, { color: colors.foreground }]}>YouTube</Text>
+            </View>
+            <View style={{ width: 36 }} />
+          </View>
+          {youtubeUrl && (
+            <WebView
+              source={{ uri: youtubeUrl }}
+              javaScriptEnabled
+              domStorageEnabled
+              allowsInlineMediaPlayback
+              mediaPlaybackRequiresUserAction={false}
+              style={{ flex: 1, backgroundColor: colors.background }}
+              startInLoadingState
+              renderLoading={() => (
+                <View style={styles.ytLoading}>
+                  <ActivityIndicator size="large" color="#FF0000" />
+                  <Text style={[styles.ytLoadingText, { color: colors.mutedForeground }]}>Loading YouTube…</Text>
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </Modal>
 
       {/* Voice command toast */}
       {commandToast && (
@@ -667,4 +746,14 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8,
   },
   commandToastText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
+  ytContainer: { flex: 1 },
+  ytHeader: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingBottom: 12,
+  },
+  ytCloseBtn: { padding: 6 },
+  ytTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  ytTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
+  ytLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 12 },
+  ytLoadingText: { fontSize: 14, fontFamily: "Inter_400Regular" },
 });

@@ -23,7 +23,8 @@
     "pg": "^8.20.0",
     "pino": "^9",
     "pino-http": "^10",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "rss-parser": "^3.13.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
