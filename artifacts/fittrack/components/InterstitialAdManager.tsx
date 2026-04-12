@@ -1,75 +1,91 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
-import {
-  AdEventType,
-  InterstitialAd,
-  TestIds,
-} from "react-native-google-mobile-ads";
 
 const COUNTER_KEY = "@zenspace_tool_opens";
-const SHOW_EVERY = 4; // show interstitial every 4 tool opens for free users
+const SHOW_EVERY = 4;
 
-const androidAdUnitId = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID ?? TestIds.INTERSTITIAL;
-const iosAdUnitId = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS ?? TestIds.INTERSTITIAL;
+// ── Safe dynamic load — prevents startup crash if AdMob SDK fails ────────────
+let AdEventType: any = null;
+let InterstitialAd: any = null;
+let TestIds: any = null;
+let admobAvailable = false;
+
+try {
+  const admob = require("react-native-google-mobile-ads");
+  AdEventType = admob.AdEventType;
+  InterstitialAd = admob.InterstitialAd;
+  TestIds = admob.TestIds;
+  admobAvailable = true;
+} catch {
+  admobAvailable = false;
+}
+
+const androidAdUnitId = admobAvailable
+  ? (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID ?? TestIds?.INTERSTITIAL)
+  : null;
+const iosAdUnitId = admobAvailable
+  ? (process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS ?? TestIds?.INTERSTITIAL)
+  : null;
 const adUnitId = Platform.OS === "ios" ? iosAdUnitId : androidAdUnitId;
 
-// Singleton ad instance to avoid loading multiple times
-let _ad: ReturnType<typeof InterstitialAd.createForAdRequest> | null = null;
+let _ad: any = null;
+let _adLoaded = false;
 
 function getAd() {
+  if (!admobAvailable || !InterstitialAd || !adUnitId) return null;
   if (!_ad) {
-    _ad = InterstitialAd.createForAdRequest(adUnitId, {
-      requestNonPersonalizedAdsOnly: false,
-    });
+    try {
+      _ad = InterstitialAd.createForAdRequest(adUnitId, {
+        requestNonPersonalizedAdsOnly: false,
+      });
+    } catch {
+      return null;
+    }
   }
   return _ad;
 }
 
 export async function trackToolOpen(isPro: boolean) {
-  if (isPro) return; // no ads for pro users
+  if (isPro || !admobAvailable) return;
   try {
     const raw = await AsyncStorage.getItem(COUNTER_KEY);
     const count = raw ? parseInt(raw, 10) : 0;
     const next = count + 1;
     await AsyncStorage.setItem(COUNTER_KEY, String(next));
+    if (next % SHOW_EVERY === 0) showInterstitialAd();
+  } catch {}
+}
 
-    if (next % SHOW_EVERY === 0) {
-      showInterstitialAd();
+function showInterstitialAd() {
+  try {
+    const ad = getAd();
+    if (!ad) return;
+    if (_adLoaded) {
+      ad.show().catch(() => {});
+      _adLoaded = false;
+      setTimeout(() => { try { ad.load(); } catch {} }, 1000);
+    } else {
+      const unsub = ad.addAdEventListener(AdEventType.LOADED, () => {
+        _adLoaded = true;
+        ad.show().catch(() => {});
+        _adLoaded = false;
+        unsub();
+        setTimeout(() => { try { ad.load(); } catch {} }, 1000);
+      });
+      ad.load();
     }
   } catch {}
 }
 
-let _adLoaded = false;
-
-function showInterstitialAd() {
-  const ad = getAd();
-  if (_adLoaded) {
-    ad.show().catch(() => {});
-    _adLoaded = false;
-    // Reload for next time
-    setTimeout(() => ad.load(), 1000);
-  } else {
-    // Load and show when ready
-    const unsub = ad.addAdEventListener(AdEventType.LOADED, () => {
-      _adLoaded = true;
-      ad.show().catch(() => {});
-      _adLoaded = false;
-      unsub();
-      setTimeout(() => ad.load(), 1000);
-    });
-    ad.load();
-  }
-}
-
-// Pre-load on app start so the first interstitial is ready
 export function usePreloadInterstitial() {
   const loaded = useRef(false);
   useEffect(() => {
-    if (loaded.current || Platform.OS === "web") return;
+    if (loaded.current || Platform.OS === "web" || !admobAvailable) return;
     loaded.current = true;
     try {
       const ad = getAd();
+      if (!ad) return;
       const unsub = ad.addAdEventListener(AdEventType.LOADED, () => {
         _adLoaded = true;
         unsub();
