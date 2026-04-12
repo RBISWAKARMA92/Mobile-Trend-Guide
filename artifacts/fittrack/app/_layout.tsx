@@ -14,16 +14,58 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { LanguageProvider, useLanguage } from "@/context/LanguageContext";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { t } = useLanguage();
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back" }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="calculator"
+        options={{ headerShown: true, title: t.calculator, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="converter"
+        options={{ headerShown: true, title: t.converter, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="timer"
+        options={{ headerShown: true, title: t.timer, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="notes"
+        options={{ headerShown: true, title: t.notes, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="tip"
+        options={{ headerShown: true, title: t.tip, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="bmi"
+        options={{ headerShown: true, title: t.bmi, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="age"
+        options={{ headerShown: true, title: t.age, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="password"
+        options={{ headerShown: true, title: t.password, headerBackTitle: "" }}
+      />
+      <Stack.Screen
+        name="language"
+        options={{ headerShown: true, title: t.selectLanguage, headerBackTitle: "" }}
+      />
     </Stack>
   );
 }
@@ -47,13 +89,15 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <GestureHandlerRootView>
-            <KeyboardProvider>
-              <RootLayoutNav />
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </QueryClientProvider>
+        <LanguageProvider>
+          <QueryClientProvider client={queryClient}>
+            <GestureHandlerRootView>
+              <KeyboardProvider>
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </QueryClientProvider>
+        </LanguageProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

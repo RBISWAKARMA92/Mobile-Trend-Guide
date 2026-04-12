@@ -1,7 +1,7 @@
 const colors = {
   light: {
     text: "#0f172a",
-    tint: "#0ea5e9",
+    tint: "#6366f1",
 
     background: "#f8fafc",
     foreground: "#0f172a",
@@ -9,17 +9,17 @@ const colors = {
     card: "#ffffff",
     cardForeground: "#0f172a",
 
-    primary: "#0ea5e9",
+    primary: "#6366f1",
     primaryForeground: "#ffffff",
 
     secondary: "#f1f5f9",
     secondaryForeground: "#1e293b",
 
     muted: "#f1f5f9",
-    mutedForeground: "#94a3b8",
+    mutedForeground: "#64748b",
 
-    accent: "#38bdf8",
-    accentForeground: "#0c4a6e",
+    accent: "#818cf8",
+    accentForeground: "#1e293b",
 
     destructive: "#ef4444",
     destructiveForeground: "#ffffff",
@@ -27,52 +27,42 @@ const colors = {
     border: "#e2e8f0",
     input: "#e2e8f0",
 
-    // Extra brand colors
     success: "#22c55e",
     warning: "#f59e0b",
     surface: "#ffffff",
-    surfaceAlt: "#f1f5f9",
-
-    // Gradient stops
-    gradientStart: "#0ea5e9",
-    gradientEnd: "#6366f1",
   },
 
   dark: {
     text: "#f1f5f9",
-    tint: "#38bdf8",
+    tint: "#818cf8",
 
-    background: "#0a0f1a",
+    background: "#09090b",
     foreground: "#f1f5f9",
 
-    card: "#111827",
+    card: "#18181b",
     cardForeground: "#f1f5f9",
 
-    primary: "#38bdf8",
-    primaryForeground: "#0c4a6e",
+    primary: "#818cf8",
+    primaryForeground: "#1e1b4b",
 
-    secondary: "#1e293b",
+    secondary: "#1e1b4b",
     secondaryForeground: "#f1f5f9",
 
-    muted: "#1e293b",
-    mutedForeground: "#64748b",
+    muted: "#27272a",
+    mutedForeground: "#71717a",
 
-    accent: "#0ea5e9",
-    accentForeground: "#e0f2fe",
+    accent: "#6366f1",
+    accentForeground: "#f1f5f9",
 
     destructive: "#ef4444",
     destructiveForeground: "#ffffff",
 
-    border: "#1e293b",
-    input: "#1e293b",
+    border: "#27272a",
+    input: "#27272a",
 
     success: "#22c55e",
     warning: "#f59e0b",
-    surface: "#111827",
-    surfaceAlt: "#1e293b",
-
-    gradientStart: "#38bdf8",
-    gradientEnd: "#818cf8",
+    surface: "#18181b",
   },
 
   radius: 16,
