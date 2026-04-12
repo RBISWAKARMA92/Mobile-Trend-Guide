@@ -27,6 +27,7 @@
     "android": {
       "package": "com.zenspace.dailytools",
       "versionCode": 12,
+      "privacyPolicyUrl": "https://zenspace.app/privacy",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#09090b"
