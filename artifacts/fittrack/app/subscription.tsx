@@ -17,6 +17,7 @@ import { WebView } from "react-native-webview";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
+import RewardedAdModal from "@/components/RewardedAdModal";
 
 const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
 
@@ -90,7 +91,8 @@ export default function SubscriptionScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { token, subscription, refreshUser, user } = useAuth();
+  const { token, subscription, refreshUser, user, rewardAd, adStatus } = useAuth();
+  const [showAdModal, setShowAdModal] = useState(false);
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -262,6 +264,41 @@ export default function SubscriptionScreen() {
           </View>
         )}
 
+        {/* Watch Ad for Credits */}
+        {user && subscription?.plan !== "pro" && (
+          <View style={[styles.watchAdCard, { backgroundColor: "#f59e0b12", borderColor: "#f59e0b40" }]}>
+            <View style={styles.watchAdLeft}>
+              <Text style={{ fontSize: 32 }}>📺</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.watchAdTitle, { color: colors.foreground }]}>Free Credits via Ads</Text>
+                <Text style={[styles.watchAdSub, { color: colors.mutedForeground }]}>
+                  Watch a short ad to earn +10 credits instantly.
+                  {adStatus ? ` ${adStatus.remaining_today}/${adStatus.max_per_day} left today.` : ""}
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => {
+                if ((adStatus?.remaining_today ?? 1) <= 0) return;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowAdModal(true);
+              }}
+              style={({ pressed }) => [{
+                backgroundColor: (adStatus?.remaining_today ?? 1) > 0 ? "#f59e0b" : colors.muted,
+                opacity: pressed ? 0.85 : 1,
+                paddingHorizontal: 18, paddingVertical: 10, borderRadius: 14, alignItems: "center" as const,
+              }]}
+            >
+              <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: (adStatus?.remaining_today ?? 1) > 0 ? "#fff" : colors.mutedForeground }}>
+                {(adStatus?.remaining_today ?? 1) > 0 ? "Watch Ad" : "Limit Reached"}
+              </Text>
+              {(adStatus?.remaining_today ?? 1) > 0 && (
+                <Text style={{ fontFamily: "Inter_400Regular", fontSize: 11, color: "rgba(255,255,255,0.8)" }}>+10 credits</Text>
+              )}
+            </Pressable>
+          </View>
+        )}
+
         <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Premium Plans</Text>
         <Text style={[styles.sectionSub, { color: colors.mutedForeground }]}>
           More messages, more savings with longer plans
@@ -392,6 +429,13 @@ export default function SubscriptionScreen() {
           </>
         )}
       </ScrollView>
+
+      <RewardedAdModal
+        visible={showAdModal}
+        onClose={() => setShowAdModal(false)}
+        onRewarded={async () => { await rewardAd(); }}
+        creditsEarned={10}
+      />
     </View>
   );
 }
@@ -458,4 +502,10 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderRadius: 12, padding: 12,
   },
   secureText: { flex: 1, fontSize: 11, fontFamily: "Inter_400Regular" },
+  watchAdCard: {
+    borderRadius: 20, borderWidth: 1, padding: 16, gap: 14,
+  },
+  watchAdLeft: { flexDirection: "row", alignItems: "center", gap: 14 },
+  watchAdTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  watchAdSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 3, lineHeight: 18 },
 });

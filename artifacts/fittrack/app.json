@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Daily Tools needs camera access to record videos.",
         "NSMicrophoneUsageDescription": "Daily Tools needs microphone access to record voice memos and videos.",
-        "NSPhotoLibraryUsageDescription": "Daily Tools needs photo library access to save recorded videos."
+        "NSPhotoLibraryUsageDescription": "Daily Tools needs photo library access to save recorded videos.",
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalised ads to you."
       }
     },
     "android": {
@@ -65,6 +66,15 @@
         {
           "microphonePermission": "Daily Tools needs microphone access to speak with AI.",
           "speechRecognitionPermission": "Daily Tools needs speech recognition to convert your voice to text."
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "android_app_id": "ca-app-pub-6765256613517786~7482960680",
+          "ios_app_id": "ca-app-pub-6765256613517786~7482960680",
+          "delay_app_measurement_init": true,
+          "user_tracking_usage_description": "This identifier will be used to deliver personalised ads to you."
         }
       ]
     ],

@@ -26,6 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
+import RewardedAdModal from "@/components/RewardedAdModal";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -195,7 +196,8 @@ export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
-  const { useCredit, user } = useAuth();
+  const { useCredit, user, rewardAd, adStatus } = useAuth();
+  const [showAdModal, setShowAdModal] = useState(false);
   const router = useRouter();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -364,8 +366,14 @@ export default function ChatScreen() {
     const creditOk = await useCredit();
     if (!creditOk) {
       setTalkStatus("idle");
-      Speech.speak("You've run out of credits. Please upgrade your plan.", { language: "en" });
-      setTimeout(() => router.push("/subscription"), 2000);
+      const adsLeft = adStatus?.remaining_today ?? 1;
+      if (adsLeft > 0) {
+        Speech.speak("You've run out of credits. Watch a short ad to earn more!", { language: "en" });
+        setTimeout(() => setShowAdModal(true), 1200);
+      } else {
+        Speech.speak("You've run out of credits. Please upgrade your plan.", { language: "en" });
+        setTimeout(() => router.push("/subscription"), 2000);
+      }
       return;
     }
 
@@ -453,12 +461,22 @@ export default function ChatScreen() {
 
     const creditOk = await useCredit();
     if (!creditOk) {
+      const adsLeft = adStatus?.remaining_today ?? 1;
       setMessages((prev) => [
         ...prev,
         { role: "user", content: text },
-        { role: "assistant", content: "⚡ You've used all your free credits! Upgrade your plan to keep chatting with AI." },
+        {
+          role: "assistant",
+          content: adsLeft > 0
+            ? "⚡ You've used all your credits!\n\n📺 Watch a short ad to earn +10 credits for free, or upgrade your plan for more."
+            : "⚡ You've used all your credits and today's ad quota!\n\nUpgrade your plan to keep chatting.",
+        },
       ]);
-      setTimeout(() => router.push("/subscription"), 1500);
+      if (adsLeft > 0) {
+        setTimeout(() => setShowAdModal(true), 600);
+      } else {
+        setTimeout(() => router.push("/subscription"), 1500);
+      }
       return;
     }
 
@@ -589,6 +607,19 @@ export default function ChatScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
+          {/* Watch Ad credits button */}
+          {user && (adStatus === null || (adStatus?.remaining_today ?? 1) > 0) && (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowAdModal(true);
+              }}
+              style={[styles.headerBtn, { backgroundColor: "#f59e0b20", borderWidth: 1, borderColor: "#f59e0b50" }]}
+            >
+              <Text style={{ fontSize: 13 }}>📺</Text>
+              <Text style={{ fontSize: 11, fontFamily: "Inter_700Bold", color: "#f59e0b" }}>+10</Text>
+            </Pressable>
+          )}
           {/* Talk mode button */}
           <Pressable
             onPress={() => {
@@ -950,6 +981,13 @@ export default function ChatScreen() {
           )}
         </Pressable>
       </View>
+
+      <RewardedAdModal
+        visible={showAdModal}
+        onClose={() => setShowAdModal(false)}
+        onRewarded={async () => { await rewardAd(); }}
+        creditsEarned={10}
+      />
     </KeyboardAvoidingView>
   );
 }

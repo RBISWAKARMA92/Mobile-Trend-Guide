@@ -65,6 +65,7 @@
     "expo-notifications": "^0.32.16",
     "expo-speech": "^14.0.8",
     "expo-speech-recognition": "^3.1.2",
+    "react-native-google-mobile-ads": "^16.3.2",
     "react-native-qrcode-svg": "^6.3.21",
     "react-native-webview": "^13.16.1"
   }

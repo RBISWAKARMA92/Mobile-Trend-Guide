@@ -3,6 +3,7 @@ import healthRouter from "./health";
 import chatRouter from "./chat";
 import authRouter from "./auth";
 import subscriptionRouter from "./subscription";
+import creditsRouter from "./credits";
 
 const router: IRouter = Router();
 
@@ -10,5 +11,6 @@ router.use(healthRouter);
 router.use(chatRouter);
 router.use(authRouter);
 router.use(subscriptionRouter);
+router.use(creditsRouter);
 
 export default router;

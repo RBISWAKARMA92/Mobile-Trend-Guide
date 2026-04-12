@@ -1,7 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Linking,
   Platform,
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
+import RewardedAdModal from "@/components/RewardedAdModal";
 
 type Tool = {
   id: string;
@@ -36,7 +37,8 @@ export default function HomeScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { t, langCode } = useLanguage();
-  const { user, subscription } = useAuth();
+  const { user, subscription, rewardAd, adStatus } = useAuth();
+  const [showAdModal, setShowAdModal] = useState(false);
 
   const tools: Tool[] = [
     {
@@ -219,15 +221,35 @@ export default function HomeScreen() {
         </View>
         <View style={styles.headerRight}>
           {user ? (
-            <Pressable
-              onPress={() => router.push("/subscription")}
-              style={[styles.creditsBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}
-            >
-              <Ionicons name="flash" size={13} color={colors.primary} />
-              <Text style={[styles.creditsCount, { color: colors.primary }]}>
-                {user.credits === 9999 ? "∞" : user.credits}
-              </Text>
-            </Pressable>
+            <>
+              {/* Watch Ad button — show when credits < 30 or always with remaining quota */}
+              {(adStatus === null || (adStatus?.remaining_today ?? 1) > 0) && subscription?.plan !== "pro" && (
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setShowAdModal(true);
+                  }}
+                  style={[styles.watchAdBtn, {
+                    backgroundColor: user.credits < 15 ? "#f59e0b" : "#f59e0b20",
+                    borderColor: "#f59e0b60",
+                  }]}
+                >
+                  <Text style={{ fontSize: 12 }}>📺</Text>
+                  <Text style={[styles.watchAdText, { color: user.credits < 15 ? "#fff" : "#f59e0b" }]}>
+                    +10
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={() => router.push("/subscription")}
+                style={[styles.creditsBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}
+              >
+                <Ionicons name="flash" size={13} color={colors.primary} />
+                <Text style={[styles.creditsCount, { color: colors.primary }]}>
+                  {user.credits === 9999 ? "∞" : user.credits}
+                </Text>
+              </Pressable>
+            </>
           ) : (
             <Pressable
               onPress={() => router.push("/login")}
@@ -313,6 +335,13 @@ export default function HomeScreen() {
           </Pressable>
         ))}
       </ScrollView>
+
+      <RewardedAdModal
+        visible={showAdModal}
+        onClose={() => setShowAdModal(false)}
+        onRewarded={async () => { await rewardAd(); }}
+        creditsEarned={10}
+      />
     </View>
   );
 }
@@ -356,4 +385,9 @@ const styles = StyleSheet.create({
   },
   iconBox: { width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   toolName: { flex: 1, fontSize: 16, fontFamily: "Inter_600SemiBold", fontWeight: "600" },
+  watchAdBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    paddingHorizontal: 9, paddingVertical: 7, borderRadius: 20, borderWidth: 1,
+  },
+  watchAdText: { fontSize: 12, fontFamily: "Inter_700Bold" },
 });
