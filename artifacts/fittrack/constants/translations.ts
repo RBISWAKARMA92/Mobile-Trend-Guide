@@ -118,6 +118,16 @@ export type Translations = {
   aiWelcomeTitle?: string;
   aiWelcomeSub?: string;
   aiPlaceholder?: string;
+  voiceRecorder?: string;
+  tapToRecord?: string;
+  tapToStop?: string;
+  holdToRecord?: string;
+  noRecordings?: string;
+  music?: string;
+  musicApps?: string;
+  radioStations?: string;
+  videoRecorder?: string;
+  cameraWebMsg?: string;
 };
 
 export const translations: Record<string, Translations> = {

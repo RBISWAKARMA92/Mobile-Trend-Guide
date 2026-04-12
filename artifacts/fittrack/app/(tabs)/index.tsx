@@ -97,6 +97,24 @@ export default function HomeScreen() {
       icon: <Ionicons name="sparkles" size={26} color="#fff" />,
       bg: "#6d28d9",
     },
+    {
+      id: "voiceRecorder",
+      route: "/voice-recorder",
+      icon: <Ionicons name="mic" size={26} color="#fff" />,
+      bg: "#dc2626",
+    },
+    {
+      id: "music",
+      route: "/music",
+      icon: <Ionicons name="musical-notes" size={26} color="#fff" />,
+      bg: "#059669",
+    },
+    {
+      id: "videoRecorder",
+      route: "/video-recorder",
+      icon: <Ionicons name="videocam" size={26} color="#fff" />,
+      bg: "#0284c7",
+    },
   ];
 
   const toolLabels: Record<string, string> = {
@@ -110,6 +128,9 @@ export default function HomeScreen() {
     password: t.password,
     reminders: t.reminders ?? "Reminders",
     chat: t.aiChat ?? "AI Friend",
+    voiceRecorder: t.voiceRecorder ?? "Voice Recorder",
+    music: t.music ?? "Music",
+    videoRecorder: t.videoRecorder ?? "Video Recorder",
   };
 
   const quickLinks: QuickLink[] = [
