@@ -190,7 +190,7 @@ export default function HomeScreen() {
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>{t.tagline}</Text>
         </View>
         <View style={styles.headerRight}>
-          {user && (
+          {user ? (
             <Pressable
               onPress={() => router.push("/subscription")}
               style={[styles.creditsBtn, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "40" }]}
@@ -199,6 +199,14 @@ export default function HomeScreen() {
               <Text style={[styles.creditsCount, { color: colors.primary }]}>
                 {user.credits === 9999 ? "∞" : user.credits}
               </Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => router.push("/login")}
+              style={[styles.signInBtn, { backgroundColor: colors.primary }]}
+            >
+              <Ionicons name="person-outline" size={13} color="#fff" />
+              <Text style={styles.signInText}>Sign In</Text>
             </Pressable>
           )}
           <Pressable
@@ -295,6 +303,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 7, borderRadius: 20, borderWidth: 1,
   },
   creditsCount: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  signInBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20 },
+  signInText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#fff" },
   langBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
   langCode: { fontSize: 13, fontFamily: "Inter_600SemiBold", fontWeight: "600" },
   content: { paddingHorizontal: 16, paddingTop: 4, gap: 10 },

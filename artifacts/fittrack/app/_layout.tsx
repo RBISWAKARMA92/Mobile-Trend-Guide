@@ -33,10 +33,8 @@ function RootLayoutNav() {
     if (isLoading) return;
     const currentSegment = segments[0] as string | undefined;
     const inAuthScreen = AUTH_SCREENS.includes(currentSegment ?? "");
-
-    if (!token && !inAuthScreen) {
-      router.replace("/login");
-    } else if (token && inAuthScreen) {
+    // Only redirect logged-in users away from auth screens; guests can use the app freely
+    if (token && inAuthScreen) {
       router.replace("/");
     }
   }, [token, isLoading, segments]);

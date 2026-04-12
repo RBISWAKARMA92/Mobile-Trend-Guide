@@ -145,6 +145,16 @@ export default function LoginScreen() {
         <Text style={[styles.terms, { color: colors.mutedForeground }]}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
+
+        {/* Guest option */}
+        <Pressable
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace("/"); }}
+          style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={[styles.guestText, { color: colors.mutedForeground }]}>
+            Continue without account →
+          </Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -176,4 +186,6 @@ const styles = StyleSheet.create({
   },
   btnText: { color: "#fff", fontSize: 17, fontFamily: "Inter_700Bold" },
   terms: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center" },
+  guestBtn: { alignSelf: "center", paddingVertical: 8, paddingHorizontal: 16 },
+  guestText: { fontSize: 14, fontFamily: "Inter_500Medium", textDecorationLine: "underline" },
 });

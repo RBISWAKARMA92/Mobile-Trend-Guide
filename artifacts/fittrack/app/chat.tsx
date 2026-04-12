@@ -400,6 +400,52 @@ export default function ChatScreen() {
   const isEmpty = messages.length === 0;
   const showInput = (input || interimText).trim();
 
+  // Guest gate — show sign-in prompt instead of chat
+  if (!user) {
+    return (
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
+          </Pressable>
+          <View style={styles.headerInfo}>
+            <View style={[styles.aiDot, { backgroundColor: "#22c55e" }]} />
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>{t.aiChat ?? "AI Friend"}</Text>
+          </View>
+          <View style={{ width: 38 }} />
+        </View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 20 }}>
+          <Text style={{ fontSize: 64 }}>🤖</Text>
+          <Text style={{ fontSize: 22, fontFamily: "Inter_700Bold", color: colors.foreground, textAlign: "center" }}>
+            Sign in to chat with AI
+          </Text>
+          <Text style={{ fontSize: 15, fontFamily: "Inter_400Regular", color: colors.mutedForeground, textAlign: "center", lineHeight: 22 }}>
+            Get 50 free AI credits when you sign up. Ask anything — news, tips, health advice, jokes, and more!
+          </Text>
+          <Pressable
+            onPress={() => router.push("/login")}
+            style={({ pressed }) => [{
+              backgroundColor: colors.primary, paddingHorizontal: 36, paddingVertical: 16,
+              borderRadius: 20, flexDirection: "row" as const, alignItems: "center" as const, gap: 8,
+              opacity: pressed ? 0.85 : 1,
+            }]}
+          >
+            <Ionicons name="person-outline" size={20} color="#fff" />
+            <Text style={{ color: "#fff", fontSize: 17, fontFamily: "Inter_700Bold" }}>Sign In / Sign Up</Text>
+          </Pressable>
+          <View style={{ gap: 10, width: "100%" }}>
+            {["Ask any question — news, tips, recipes", "Get health & fitness advice", "Voice input & text-to-speech replies", "50 free credits on signup"].map((f) => (
+              <View key={f} style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                <Text style={{ fontSize: 14, fontFamily: "Inter_400Regular", color: colors.mutedForeground }}>{f}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: colors.background }]}
