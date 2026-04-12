@@ -213,20 +213,61 @@ export default function ChatScreen() {
   const [isListening, setIsListening] = useState(false);
   const [interimText, setInterimText] = useState("");
   const [speakReplies, setSpeakReplies] = useState(false);
+  const [talkMode, setTalkMode] = useState(false);
+  const [talkStatus, setTalkStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const pulseLoop = useRef<Animated.CompositeAnimation | null>(null);
+  const wave1 = useRef(new Animated.Value(0.3)).current;
+  const wave2 = useRef(new Animated.Value(0.5)).current;
+  const wave3 = useRef(new Animated.Value(0.7)).current;
+  const wave4 = useRef(new Animated.Value(0.4)).current;
+  const wave5 = useRef(new Animated.Value(0.6)).current;
+  const waveLoop = useRef<Animated.CompositeAnimation | null>(null);
+
+  function startWaves() {
+    const makeWave = (anim: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(anim, { toValue: 1, duration: 300 + delay, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.2, duration: 300 + delay, useNativeDriver: true }),
+        ])
+      );
+    waveLoop.current = Animated.parallel([
+      makeWave(wave1, 0), makeWave(wave2, 80), makeWave(wave3, 160),
+      makeWave(wave4, 40), makeWave(wave5, 120),
+    ]);
+    waveLoop.current.start();
+  }
+  function stopWaves() {
+    waveLoop.current?.stop();
+    [wave1, wave2, wave3, wave4, wave5].forEach((w) => w.setValue(0.3));
+  }
 
   // Speech recognition events
-  useSpeechRecognitionEvent("start", () => setIsListening(true));
+  useSpeechRecognitionEvent("start", () => {
+    setIsListening(true);
+    if (talkMode) { setTalkStatus("listening"); startWaves(); }
+  });
   useSpeechRecognitionEvent("end", () => {
     setIsListening(false);
     setInterimText("");
+    stopWaves();
+    if (talkMode) setTalkStatus("idle");
   });
   useSpeechRecognitionEvent("result", (event) => {
     const transcript = event.results[0]?.transcript ?? "";
     if (event.isFinal) {
-      setInput((prev) => (prev ? prev + " " + transcript : transcript).trim());
+      const finalText = transcript.trim();
       setInterimText("");
+      if (talkMode && finalText) {
+        // Auto-send in talk mode
+        setTalkStatus("thinking");
+        stopWaves();
+        sendTalkMessage(finalText);
+      } else {
+        setInput((prev) => (prev ? prev + " " + finalText : finalText).trim());
+      }
     } else {
       setInterimText(transcript);
     }
@@ -234,6 +275,8 @@ export default function ChatScreen() {
   useSpeechRecognitionEvent("error", () => {
     setIsListening(false);
     setInterimText("");
+    stopWaves();
+    if (talkMode) setTalkStatus("idle");
   });
 
   // Toast animation
@@ -288,9 +331,91 @@ export default function ChatScreen() {
   }
 
   function speakText(text: string) {
-    if (!speakReplies) return;
+    if (!speakReplies && !talkMode) return;
     Speech.stop();
-    Speech.speak(text, { language: langCode ?? "en", rate: 0.95 });
+    Speech.speak(text, {
+      language: langCode ?? "en", rate: 0.95,
+      onStart: () => { if (talkMode) setTalkStatus("speaking"); },
+      onDone: () => { if (talkMode) setTalkStatus("idle"); },
+    });
+  }
+
+  async function sendTalkMessage(text: string) {
+    if (!text || loading) { setTalkStatus("idle"); return; }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    const ytQuery = detectYoutubeCommand(text);
+    if (ytQuery) {
+      setTalkStatus("idle");
+      showCommandToast("Opening YouTube…");
+      setYoutubeUrl(`https://www.youtube.com/results?search_query=${ytQuery}`);
+      setTalkMode(false);
+      return;
+    }
+    const cmd = detectVoiceCommand(text);
+    if (cmd) {
+      setTalkStatus("idle");
+      showCommandToast(`Opening ${cmd.label}…`);
+      Speech.speak(`Opening ${cmd.label}`, { language: "en" });
+      setTimeout(() => { router.push(cmd.route as any); setTalkMode(false); }, 900);
+      return;
+    }
+
+    const creditOk = await useCredit();
+    if (!creditOk) {
+      setTalkStatus("idle");
+      Speech.speak("You've run out of credits. Please upgrade your plan.", { language: "en" });
+      setTimeout(() => router.push("/subscription"), 2000);
+      return;
+    }
+
+    const userMsg: Message = { role: "user", content: text };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setLoading(true);
+    setStreamText("");
+
+    try {
+      const response = await fetch(`${API_BASE}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages, language: langCode }),
+      });
+      if (!response.ok || !response.body) throw new Error("Request failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value, { stream: true }).split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const json = JSON.parse(line.slice(6));
+              if (json.done) break;
+              if (json.content) { fullText += json.content; setStreamText(fullText); }
+            } catch {}
+          }
+        }
+      }
+      if (fullText) {
+        setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
+        setTalkStatus("speaking");
+        Speech.speak(fullText, {
+          language: langCode ?? "en", rate: 0.95,
+          onDone: () => { setTalkStatus("idle"); },
+        });
+      }
+      setStreamText("");
+    } catch {
+      Speech.speak("Sorry, something went wrong.", { language: "en" });
+      setTalkStatus("idle");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const scrollToBottom = useCallback(() => {
@@ -464,6 +589,18 @@ export default function ChatScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
+          {/* Talk mode button */}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setTalkMode(true);
+              setTalkStatus("idle");
+            }}
+            style={[styles.headerBtn, styles.talkBtn, { backgroundColor: colors.primary }]}
+          >
+            <Ionicons name="mic" size={15} color="#fff" />
+            <Text style={styles.talkBtnText}>Talk</Text>
+          </Pressable>
           {/* Speaker toggle */}
           <Pressable
             onPress={() => {
@@ -606,6 +743,116 @@ export default function ChatScreen() {
                 </View>
               )}
             />
+          )}
+        </View>
+      </Modal>
+
+      {/* ── Talk Mode Overlay ───────────────────────────────── */}
+      <Modal visible={talkMode} animationType="fade" transparent onRequestClose={() => { setTalkMode(false); if (isListening) ExpoSpeechRecognitionModule.stop(); Speech.stop(); }}>
+        <View style={[styles.talkOverlay, { backgroundColor: colors.background + "F8" }]}>
+          {/* Close */}
+          <Pressable
+            onPress={() => { setTalkMode(false); if (isListening) ExpoSpeechRecognitionModule.stop(); Speech.stop(); setTalkStatus("idle"); stopWaves(); }}
+            style={[styles.talkClose, { backgroundColor: colors.card, borderColor: colors.border }]}
+          >
+            <Feather name="x" size={22} color={colors.foreground} />
+          </Pressable>
+
+          {/* AI avatar */}
+          <View style={[styles.talkAvatar, { backgroundColor: colors.primary + (talkStatus === "thinking" || talkStatus === "speaking" ? "30" : "15") }]}>
+            <Ionicons
+              name={talkStatus === "thinking" ? "sparkles" : talkStatus === "speaking" ? "volume-high" : "sparkles"}
+              size={52}
+              color={colors.primary}
+            />
+          </View>
+
+          {/* Status label */}
+          <Text style={[styles.talkLabel, { color: colors.foreground }]}>
+            {talkStatus === "listening" ? "Listening…" :
+             talkStatus === "thinking" ? "Thinking…" :
+             talkStatus === "speaking" ? "Speaking…" :
+             "AI Friend"}
+          </Text>
+          <Text style={[styles.talkSub, { color: colors.mutedForeground }]}>
+            {talkStatus === "idle" ? "Tap the mic and speak" :
+             talkStatus === "listening" ? interimText || "Speak now…" :
+             talkStatus === "thinking" ? "Processing your message" :
+             "Auto-speaks the reply"}
+          </Text>
+
+          {/* Waveform bars */}
+          <View style={styles.waveform}>
+            {[wave1, wave2, wave3, wave4, wave5].map((w, i) => (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.waveBar,
+                  {
+                    backgroundColor: talkStatus === "listening" ? colors.primary : talkStatus === "speaking" ? "#22c55e" : colors.border,
+                    transform: [{ scaleY: w }],
+                  },
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Big mic button */}
+          <Pressable
+            onPress={async () => {
+              if (isListening) {
+                ExpoSpeechRecognitionModule.stop();
+              } else if (talkStatus === "idle") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                try {
+                  const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+                  if (!granted) return;
+                  ExpoSpeechRecognitionModule.start({ lang: langCode ?? "en-IN", interimResults: true, continuous: false });
+                } catch {}
+              }
+            }}
+            disabled={talkStatus === "thinking" || talkStatus === "speaking"}
+            style={({ pressed }) => [
+              styles.bigMicBtn,
+              {
+                backgroundColor:
+                  talkStatus === "listening" ? "#ef4444" :
+                  talkStatus === "thinking" || talkStatus === "speaking" ? colors.muted :
+                  colors.primary,
+                transform: [{ scale: pressed ? 0.93 : 1 }],
+                opacity: (talkStatus === "thinking" || talkStatus === "speaking") ? 0.5 : 1,
+              },
+            ]}
+          >
+            {talkStatus === "thinking" ? (
+              <ActivityIndicator size="large" color="#fff" />
+            ) : (
+              <Ionicons
+                name={talkStatus === "listening" ? "stop" : "mic"}
+                size={44}
+                color="#fff"
+              />
+            )}
+          </Pressable>
+
+          {/* Ripple rings when listening */}
+          {talkStatus === "listening" && (
+            <>
+              <Animated.View style={[styles.rippleRing, { borderColor: "#ef4444", transform: [{ scale: pulseAnim }], opacity: pulseAnim.interpolate({ inputRange: [1, 1.35], outputRange: [0.5, 0] }) }]} />
+              <Animated.View style={[styles.rippleRing2, { borderColor: "#ef4444", transform: [{ scale: pulseAnim }], opacity: pulseAnim.interpolate({ inputRange: [1, 1.35], outputRange: [0.3, 0] }) }]} />
+            </>
+          )}
+
+          {/* Recent messages */}
+          {messages.length > 0 && (
+            <View style={[styles.talkHistory, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.talkHistoryLabel, { color: colors.mutedForeground }]}>Last exchange</Text>
+              {messages.slice(-2).map((m, i) => (
+                <Text key={i} style={[styles.talkHistoryMsg, { color: m.role === "user" ? colors.primary : colors.foreground }]} numberOfLines={2}>
+                  {m.role === "user" ? "You: " : "AI: "}{m.content}
+                </Text>
+              ))}
+            </View>
           )}
         </View>
       </Modal>
@@ -802,4 +1049,47 @@ const styles = StyleSheet.create({
   ytTitle: { fontSize: 17, fontFamily: "Inter_700Bold" },
   ytLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center", gap: 12 },
   ytLoadingText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+
+  // Talk mode
+  talkBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 },
+  talkBtnText: { color: "#fff", fontSize: 13, fontFamily: "Inter_700Bold" },
+  talkOverlay: {
+    flex: 1, alignItems: "center", justifyContent: "center", gap: 20, padding: 28,
+  },
+  talkClose: {
+    position: "absolute", top: 60, right: 20,
+    width: 44, height: 44, borderRadius: 22,
+    alignItems: "center", justifyContent: "center", borderWidth: 1, zIndex: 10,
+  },
+  talkAvatar: {
+    width: 120, height: 120, borderRadius: 60,
+    alignItems: "center", justifyContent: "center",
+  },
+  talkLabel: { fontSize: 28, fontFamily: "Inter_700Bold", textAlign: "center" },
+  talkSub: {
+    fontSize: 16, fontFamily: "Inter_400Regular", textAlign: "center",
+    minHeight: 48, paddingHorizontal: 20, lineHeight: 24,
+  },
+  waveform: { flexDirection: "row", alignItems: "center", gap: 6, height: 60 },
+  waveBar: { width: 6, height: 50, borderRadius: 3 },
+  bigMicBtn: {
+    width: 110, height: 110, borderRadius: 55,
+    alignItems: "center", justifyContent: "center",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25, shadowRadius: 16, elevation: 12,
+  },
+  rippleRing: {
+    position: "absolute", width: 150, height: 150, borderRadius: 75,
+    borderWidth: 2, bottom: 120 + 55,
+  },
+  rippleRing2: {
+    position: "absolute", width: 190, height: 190, borderRadius: 95,
+    borderWidth: 1, bottom: 120 + 35,
+  },
+  talkHistory: {
+    width: "100%", borderRadius: 18, borderWidth: 1,
+    padding: 14, gap: 6, marginTop: 8,
+  },
+  talkHistoryLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.6 },
+  talkHistoryMsg: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
 });
