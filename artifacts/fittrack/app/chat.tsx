@@ -36,6 +36,131 @@ const SUGGESTIONS_EN = [
   "What is my BMI if I weigh 70kg and am 175cm?",
 ];
 
+// ─── Voice Command Engine ────────────────────────────────────────────────────
+type VoiceCommand = {
+  route: string;
+  label: string;
+  keywords: string[];
+};
+
+const VOICE_COMMANDS: VoiceCommand[] = [
+  {
+    route: "/music",
+    label: "Music Player",
+    keywords: [
+      "play music", "open music", "music player", "play song", "play songs",
+      "gaana bajao", "music bajao", "gaana chalao", "music chalao",
+      "music kholo", "play radio", "open radio",
+    ],
+  },
+  {
+    route: "/calculator",
+    label: "Calculator",
+    keywords: [
+      "open calculator", "calculator", "calculate", "math",
+      "calculator kholo", "calculator chalao", "ganit",
+    ],
+  },
+  {
+    route: "/timer",
+    label: "Timer",
+    keywords: [
+      "open timer", "start timer", "set timer", "stopwatch", "countdown",
+      "timer kholo", "timer lagao", "timer shuru karo",
+    ],
+  },
+  {
+    route: "/converter",
+    label: "Converter",
+    keywords: [
+      "open converter", "unit converter", "convert units", "converter",
+      "converter kholo",
+    ],
+  },
+  {
+    route: "/notes",
+    label: "Notes",
+    keywords: [
+      "open notes", "take note", "write note", "my notes", "notes kholo",
+      "note likhna", "notes",
+    ],
+  },
+  {
+    route: "/bmi",
+    label: "BMI Calculator",
+    keywords: [
+      "open bmi", "check bmi", "bmi calculator", "body mass",
+      "bmi check karo", "bmi",
+    ],
+  },
+  {
+    route: "/age",
+    label: "Age Calculator",
+    keywords: [
+      "open age calculator", "check age", "age calculator", "how old",
+      "age check karo", "umar",
+    ],
+  },
+  {
+    route: "/tip",
+    label: "Tip Calculator",
+    keywords: [
+      "open tip", "tip calculator", "calculate tip", "split bill",
+      "tip", "bill split karo",
+    ],
+  },
+  {
+    route: "/password",
+    label: "Password Generator",
+    keywords: [
+      "open password", "generate password", "password generator", "new password",
+      "password banao", "password generator kholo",
+    ],
+  },
+  {
+    route: "/reminders",
+    label: "Reminders",
+    keywords: [
+      "open reminders", "set reminder", "add reminder", "remind me",
+      "reminder lagao", "reminder kholo",
+    ],
+  },
+  {
+    route: "/voice-recorder",
+    label: "Voice Recorder",
+    keywords: [
+      "open voice recorder", "record voice", "voice recorder", "record audio",
+      "voice record karo", "awaz record karo",
+    ],
+  },
+  {
+    route: "/video-recorder",
+    label: "Video Recorder",
+    keywords: [
+      "open video recorder", "record video", "video recorder", "take video",
+      "video record karo", "video banao",
+    ],
+  },
+  {
+    route: "/subscription",
+    label: "Subscription Plans",
+    keywords: [
+      "open subscription", "upgrade plan", "buy plan", "subscription",
+      "credits kharido", "plan upgrade karo",
+    ],
+  },
+];
+
+function detectVoiceCommand(text: string): VoiceCommand | null {
+  const lower = text.toLowerCase().trim();
+  for (const cmd of VOICE_COMMANDS) {
+    for (const kw of cmd.keywords) {
+      if (lower.includes(kw)) return cmd;
+    }
+  }
+  return null;
+}
+
 export default function ChatScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -49,6 +174,8 @@ export default function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamText, setStreamText] = useState("");
+  const [commandToast, setCommandToast] = useState<string | null>(null);
+  const toastAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
   // Voice input state
@@ -77,6 +204,17 @@ export default function ChatScreen() {
     setIsListening(false);
     setInterimText("");
   });
+
+  // Toast animation
+  function showCommandToast(label: string) {
+    setCommandToast(label);
+    toastAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(toastAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.delay(1400),
+      Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(() => setCommandToast(null));
+  }
 
   // Pulse animation while listening
   useEffect(() => {
@@ -137,6 +275,17 @@ export default function ChatScreen() {
     setInterimText("");
     if (isListening) ExpoSpeechRecognitionModule.stop();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // ── Voice Command Detection ──────────────────────────────────────────────
+    const cmd = detectVoiceCommand(text);
+    if (cmd) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showCommandToast(`Opening ${cmd.label}…`);
+      Speech.speak(`Opening ${cmd.label}`, { language: "en" });
+      setTimeout(() => router.push(cmd.route as any), 900);
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const creditOk = await useCredit();
     if (!creditOk) {
@@ -267,7 +416,7 @@ export default function ChatScreen() {
             <View style={[styles.micHint, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Ionicons name="mic" size={16} color={colors.primary} />
               <Text style={[styles.micHintText, { color: colors.mutedForeground }]}>
-                Tap the mic button to speak your question
+                Tap mic to speak · Say <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>"play music"</Text>, <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold" }}>"open calculator"</Text> or ask anything!
               </Text>
             </View>
             <View style={styles.suggestions}>
@@ -335,6 +484,23 @@ export default function ChatScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Voice command toast */}
+      {commandToast && (
+        <Animated.View
+          style={[
+            styles.commandToast,
+            {
+              backgroundColor: "#22c55e",
+              opacity: toastAnim,
+              transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+            },
+          ]}
+        >
+          <Ionicons name="navigate" size={16} color="#fff" />
+          <Text style={styles.commandToastText}>{commandToast}</Text>
+        </Animated.View>
+      )}
 
       {/* Interim voice text preview */}
       {isListening && interimText ? (
@@ -493,4 +659,12 @@ const styles = StyleSheet.create({
     width: 44, height: 44, borderRadius: 22,
     alignItems: "center", justifyContent: "center",
   },
+  commandToast: {
+    position: "absolute", bottom: 120, alignSelf: "center",
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 20, paddingVertical: 12,
+    borderRadius: 30, zIndex: 100,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 8,
+  },
+  commandToastText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
 });
