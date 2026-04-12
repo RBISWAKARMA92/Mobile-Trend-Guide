@@ -14,20 +14,30 @@
       "backgroundColor": "#09090b"
     },
     "ios": {
+      "bundleIdentifier": "com.zenspace.dailytools",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Daily Tools needs camera access to record videos.",
-        "NSMicrophoneUsageDescription": "Daily Tools needs microphone access to record voice memos and videos.",
-        "NSPhotoLibraryUsageDescription": "Daily Tools needs photo library access to save recorded videos.",
+        "NSCameraUsageDescription": "ZenSpace needs camera access to scan QR codes.",
+        "NSMicrophoneUsageDescription": "ZenSpace needs microphone access for AI voice chat.",
+        "NSPhotoLibraryUsageDescription": "ZenSpace needs photo library access to save images.",
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalised ads to you."
       }
     },
     "android": {
+      "package": "com.zenspace.dailytools",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#09090b"
+      },
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE"
       ]
     },
     "web": {
@@ -54,8 +64,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Daily Tools needs camera access to record videos.",
-          "microphonePermission": "Daily Tools needs microphone access to record videos.",
+          "cameraPermission": "ZenSpace needs camera access to scan QR codes.",
+          "microphonePermission": "ZenSpace needs microphone access for AI voice chat.",
           "recordAudioAndroid": true
         }
       ],
@@ -64,8 +74,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Daily Tools needs microphone access to speak with AI.",
-          "speechRecognitionPermission": "Daily Tools needs speech recognition to convert your voice to text."
+          "microphonePermission": "ZenSpace needs microphone access to speak with AI.",
+          "speechRecognitionPermission": "ZenSpace needs speech recognition to convert your voice to text."
         }
       ],
       [
