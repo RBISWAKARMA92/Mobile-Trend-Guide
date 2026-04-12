@@ -11,6 +11,26 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Android APK Build"
+
+[[workflows.workflow]]
+name = "Android APK Build"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export JAVA_HOME=/home/runner/jdk17 && export PATH=$JAVA_HOME/bin:$PATH && export ANDROID_HOME=/home/runner/android-sdk && export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools && export JAVA_TOOL_OPTIONS=\"-Xshare:off -XX:-UsePerfData -Dsun.zip.disableMemoryMapping=true -XX:+DisableAttachMechanism\" && echo 'BUILD STARTED' && cd artifacts/fittrack/android && ./gradlew assembleDebug && echo 'APK_BUILD_SUCCESS' || echo 'APK_BUILD_FAILED'"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -46,6 +66,10 @@ externalPort = 3003
 [[ports]]
 localPort = 19306
 externalPort = 5000
+
+[[ports]]
+localPort = 19307
+externalPort = 6000
 
 [[ports]]
 localPort = 25772
