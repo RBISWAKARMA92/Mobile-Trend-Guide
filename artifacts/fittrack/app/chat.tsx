@@ -204,7 +204,13 @@ export default function ChatScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content:
+        "✨ Namaste! I'm **ZenSpace AI** — your warm, caring companion inside ZenSpace.\n\nI'm here for *everything*:\n🧠 Answer any question\n🌿 Mental wellness & mood support\n🙏 Guide you through app tools\n😄 Share a joke or a kind word\n📰 Fetch latest news\n\nJust type or tap the mic and talk to me — in *any language*. I'll always reply in yours. 💬",
+    },
+  ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamText, setStreamText] = useState("");
