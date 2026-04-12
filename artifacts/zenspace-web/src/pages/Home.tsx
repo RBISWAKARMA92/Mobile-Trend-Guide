@@ -131,10 +131,12 @@ export default function Home() {
             className="grid grid-cols-2 md:grid-cols-4 gap-4"
           >
             {[
-              { icon: "🙏", title: "Chant Counter", desc: "Mala & Rosary counter with haptic feedback" },
-              { icon: "🤖", title: "AI Friend", desc: "Chat & voice Talk Mode with your AI companion" },
-              { icon: "💰", title: "Expense Tracker", desc: "Simple, stress-free money tracking" },
-              { icon: "📝", title: "Notes", desc: "Quick jot-down notes, always at hand" },
+              { icon: "🤖", title: "AI Friend", desc: "Chat & voice Talk Mode with your AI companion", featured: true },
+              { icon: "🙏", title: "Chant Counter", desc: "Mala & Rosary counter with haptic feedback", featured: true },
+              { icon: "🔥", title: "Habit Builder", desc: "Small steps, no streak guilt", featured: true },
+              { icon: "🎵", title: "Music Player", desc: "Calm background music while you work", featured: true },
+              { icon: "📝", title: "Notes", desc: "Quick jot-down notes, always at hand", featured: true },
+              { icon: "💰", title: "Expense Tracker", desc: "Simple, stress-free money tracking", featured: true },
               { icon: "🧮", title: "Calculator", desc: "Clean everyday calculator" },
               { icon: "🔄", title: "Unit Converter", desc: "Convert length, weight, temp & more" },
               { icon: "⏱️", title: "Timer", desc: "Countdown & stopwatch for focus sessions" },
@@ -144,7 +146,6 @@ export default function Home() {
               { icon: "🔐", title: "Password Gen", desc: "Strong, random passwords on demand" },
               { icon: "🔔", title: "Reminders", desc: "Gentle nudges to keep you on track" },
               { icon: "🎙️", title: "Voice Recorder", desc: "Record thoughts, ideas, meetings" },
-              { icon: "🎵", title: "Music Player", desc: "Calm background music while you work" },
               { icon: "🎬", title: "Video Recorder", desc: "Quick video capture from within the app" },
               { icon: "🧒", title: "Kids Zone", desc: "Safe, fun space for little ones" },
               { icon: "🌬️", title: "Breathing Guide", desc: "Box breathing & relaxation visuals" },
@@ -153,7 +154,6 @@ export default function Home() {
               { icon: "📷", title: "QR Code", desc: "Scan & generate QR codes easily" },
               { icon: "😊", title: "Mood Tracker", desc: "Daily check-ins without judgment" },
               { icon: "🌙", title: "Sleep Log", desc: "Track your rest for better mornings" },
-              { icon: "🔥", title: "Habit Builder", desc: "Small steps, no streak guilt" },
             ].map((tool, i) => (
               <motion.div key={i} variants={staggerItem}>
                 <a
@@ -163,11 +163,12 @@ export default function Home() {
                   data-testid={`tool-card-${i}`}
                   className="block group"
                 >
-                  <Card className="bg-card/50 border-border/30 hover:border-secondary/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full cursor-pointer">
+                  <Card className={`border hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full cursor-pointer ${tool.featured ? "bg-secondary/8 border-secondary/40 hover:border-secondary" : "bg-card/50 border-border/30 hover:border-secondary/40"}`}>
                     <CardContent className="p-5 space-y-2">
                       <div className="text-3xl mb-3">{tool.icon}</div>
-                      <h3 className="text-base font-semibold text-primary group-hover:text-secondary transition-colors">{tool.title}</h3>
+                      <h3 className={`text-base font-semibold transition-colors group-hover:text-secondary ${tool.featured ? "text-primary" : "text-primary"}`}>{tool.title}</h3>
                       <p className="text-xs text-primary/60 leading-relaxed">{tool.desc}</p>
+                      {tool.featured && <span className="inline-block text-[10px] font-medium text-secondary/80 bg-secondary/10 px-2 py-0.5 rounded-full">Featured</span>}
                     </CardContent>
                   </Card>
                 </a>
