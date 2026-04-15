@@ -161,6 +161,7 @@ export default function HomeScreen() {
   ];
 
   const quickLinks = [
+    { id: "wa", label: "WhatsApp", url: "https://whatsapp.com/channel/0029Vb7YQKlDuMRhi9jTnw1D", icon: "whatsapp", lib: "MC", color: "#25D366" },
     { id: "yt", label: "YouTube", url: "https://youtube.com", icon: "logo-youtube", lib: "Ionicons", color: "#FF0000" },
     { id: "g", label: "Google", url: "https://google.com", icon: "google", lib: "MC", color: "#4285F4" },
     { id: "gem", label: "Gemini", url: "https://gemini.google.com", icon: "star-four-points", lib: "MC", color: "#8B5CF6" },
