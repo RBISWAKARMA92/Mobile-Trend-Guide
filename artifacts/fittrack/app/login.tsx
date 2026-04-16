@@ -14,9 +14,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
 import { getApiBase } from "@/constants/api";
+
 const BASE_URL = getApiBase();
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -25,15 +29,14 @@ export default function LoginScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("+91");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSendOTP() {
-    const full = `${countryCode}${phone.replace(/\s/g, "")}`;
-    if (phone.length < 7) {
-      setError("Please enter a valid phone number");
+    const trimmed = email.trim().toLowerCase();
+    if (!isValidEmail(trimmed)) {
+      setError("Please enter a valid email address");
       return;
     }
     setError("");
@@ -43,11 +46,11 @@ export default function LoginScreen() {
       const res = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: full }),
+        body: JSON.stringify({ email: trimmed }),
       });
       const data = await res.json();
       if (res.ok) {
-        router.push({ pathname: "/otp-verify", params: { phone: full, otp: data.otp } });
+        router.push({ pathname: "/otp-verify", params: { email: trimmed, otp: data.otp ?? "" } });
       } else {
         setError(data.error ?? "Failed to send OTP");
       }
@@ -57,64 +60,46 @@ export default function LoginScreen() {
     setLoading(false);
   }
 
-  const CODES = ["+91", "+1", "+44", "+971", "+61", "+49", "+33", "+81"];
-
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={[styles.content, { paddingTop: topPad + 40, paddingBottom: bottomPad + 24 }]}>
-        {/* Logo */}
         <View style={[styles.logoCircle, { backgroundColor: colors.primary + "18" }]}>
-          <Ionicons name="phone-portrait-outline" size={48} color={colors.primary} />
+          <Ionicons name="mail-outline" size={48} color={colors.primary} />
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>Welcome to Daily Tools</Text>
+
+        <Text style={[styles.title, { color: colors.foreground }]}>Welcome to ZenSpace</Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Enter your mobile number to get started
+          Enter your email to get started
         </Text>
 
-        {/* Country code selector */}
-        <View style={styles.codeRow}>
-          {CODES.map((c) => (
-            <Pressable
-              key={c}
-              onPress={() => setCountryCode(c)}
-              style={[
-                styles.codeChip,
-                {
-                  backgroundColor: countryCode === c ? colors.primary : colors.card,
-                  borderColor: countryCode === c ? colors.primary : colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.codeText, { color: countryCode === c ? "#fff" : colors.foreground }]}>{c}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Phone input */}
-        <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.codePrefix, { color: colors.primary }]}>{countryCode}</Text>
+        <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderColor: error ? "#ef4444" : colors.border }]}>
+          <Ionicons name="mail-outline" size={20} color={colors.mutedForeground} />
           <TextInput
             style={[styles.input, { color: colors.foreground }]}
-            placeholder="Enter phone number"
+            placeholder="your@email.com"
             placeholderTextColor={colors.mutedForeground}
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={(v) => { setPhone(v); setError(""); }}
-            maxLength={15}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            value={email}
+            onChangeText={(v) => { setEmail(v); setError(""); }}
+            returnKeyType="send"
+            onSubmitEditing={handleSendOTP}
           />
+          {isValidEmail(email) && (
+            <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
+          )}
         </View>
 
-        {error ? (
-          <Text style={styles.error}>{error}</Text>
-        ) : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {/* Benefits */}
         <View style={[styles.benefitsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.benefitsTitle, { color: colors.foreground }]}>🎁 Free Welcome Bonus</Text>
-          {["50 free AI chat credits", "All 13 tools unlocked", "Voice & video recorder", "Music player"].map((b) => (
+          {["50 free AI chat credits", "All 21 tools unlocked", "Voice & video recorder", "AI Talk Mode"].map((b) => (
             <View key={b} style={styles.benefitRow}>
               <Ionicons name="checkmark-circle" size={16} color="#22c55e" />
               <Text style={[styles.benefitText, { color: colors.mutedForeground }]}>{b}</Text>
@@ -124,11 +109,11 @@ export default function LoginScreen() {
 
         <Pressable
           onPress={handleSendOTP}
-          disabled={loading || phone.length < 7}
+          disabled={loading || !isValidEmail(email)}
           style={({ pressed }) => [
             styles.btn,
             {
-              backgroundColor: phone.length >= 7 ? colors.primary : colors.mutedForeground,
+              backgroundColor: isValidEmail(email) ? colors.primary : colors.mutedForeground,
               opacity: pressed ? 0.85 : 1,
             },
           ]}
@@ -147,7 +132,6 @@ export default function LoginScreen() {
           By continuing, you agree to our Terms of Service and Privacy Policy
         </Text>
 
-        {/* Guest option */}
         <Pressable
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.replace("/"); }}
           style={({ pressed }) => [styles.guestBtn, { opacity: pressed ? 0.7 : 1 }]}
@@ -167,15 +151,11 @@ const styles = StyleSheet.create({
   logoCircle: { width: 90, height: 90, borderRadius: 45, alignItems: "center", justifyContent: "center", alignSelf: "center" },
   title: { fontSize: 26, fontFamily: "Inter_700Bold", textAlign: "center" },
   subtitle: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 4 },
-  codeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  codeChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  codeText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   inputWrapper: {
     flexDirection: "row", alignItems: "center",
-    borderRadius: 16, borderWidth: 1, paddingHorizontal: 16, height: 56, gap: 10,
+    borderRadius: 16, borderWidth: 1.5, paddingHorizontal: 16, height: 56, gap: 10,
   },
-  codePrefix: { fontSize: 17, fontFamily: "Inter_700Bold", minWidth: 40 },
-  input: { flex: 1, fontSize: 18, fontFamily: "Inter_400Regular" },
+  input: { flex: 1, fontSize: 16, fontFamily: "Inter_400Regular" },
   error: { color: "#ef4444", fontSize: 13, fontFamily: "Inter_400Regular" },
   benefitsCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 8 },
   benefitsTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
