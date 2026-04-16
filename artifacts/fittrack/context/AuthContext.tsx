@@ -6,7 +6,7 @@ const BASE_URL = `${getApiBase()}/api`;
 
 export type User = {
   id: number;
-  phone: string;
+  email: string;
   name: string | null;
   credits: number;
 };
