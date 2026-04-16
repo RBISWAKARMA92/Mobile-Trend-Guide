@@ -54,8 +54,9 @@ export default function LoginScreen() {
       } else {
         setError(data.error ?? "Failed to send OTP");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Connection failed: ${msg}`);
     }
     setLoading(false);
   }
