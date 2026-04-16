@@ -1,6 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -46,6 +47,7 @@ const FEATURED = [
     label: "Chant Counter",
     sublabel: "Mala & Rosary",
     colors: ["#7c3aed", "#4f46e5"] as [string, string],
+    badge: "🔥 Popular",
   },
   {
     id: "chat",
@@ -54,6 +56,7 @@ const FEATURED = [
     label: "AI Friend",
     sublabel: "Chat & Voice",
     colors: ["#0ea5e9", "#6366f1"] as [string, string],
+    badge: "⭐ Top Pick",
   },
   {
     id: "expense",
@@ -81,6 +84,7 @@ type ToolItem = {
   iconEmoji?: string;
   icon?: string;
   iconLib?: "Feather" | "Ionicons" | "MC";
+  hot?: boolean;
 };
 
 function ToolIcon({ tool }: { tool: ToolItem }) {
@@ -153,7 +157,7 @@ export default function HomeScreen() {
     { id: "voice-recorder", route: "/voice-recorder", bg: "#dc2626", label: t.voiceRecorder ?? "Voice", icon: "mic", iconLib: "Ionicons" },
     { id: "music", route: "/music", bg: "#059669", label: t.music ?? "Music", icon: "musical-notes", iconLib: "Ionicons" },
     { id: "video-recorder", route: "/video-recorder", bg: "#0284c7", label: t.videoRecorder ?? "Video", icon: "videocam", iconLib: "Ionicons" },
-    { id: "kids-zone", route: "/kids-zone", bg: "#f43f5e", label: t.kidsZone ?? "Kids", iconEmoji: "🧒" },
+    { id: "kids-zone", route: "/kids-zone", bg: "#f43f5e", label: t.kidsZone ?? "Kids", iconEmoji: "🧒", hot: true },
     { id: "breathing", route: "/breathing", bg: "#4f46e5", label: "Breathing", iconEmoji: "🌬️" },
     { id: "flashlight", route: "/flashlight", bg: "#d97706", label: "Flashlight", icon: "flashlight", iconLib: "Ionicons" },
     { id: "world-clock", route: "/world-clock", bg: "#0891b2", label: "World Clock", icon: "earth", iconLib: "Ionicons" },
@@ -342,6 +346,11 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.featCard, { opacity: pressed ? 0.85 : 1 }]}
             >
               <LinearGradient colors={f.colors} style={styles.featGrad}>
+                {f.badge ? (
+                  <View style={styles.featBadge}>
+                    <Text style={styles.featBadgeText}>{f.badge}</Text>
+                  </View>
+                ) : null}
                 <Text style={styles.featEmoji}>{f.emoji}</Text>
                 <Text style={styles.featLabel}>{f.label}</Text>
                 <Text style={styles.featSub}>{f.sublabel}</Text>
@@ -364,8 +373,15 @@ export default function HomeScreen() {
               }}
               style={({ pressed }) => [styles.toolCell, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <View style={[styles.toolIconBox, { backgroundColor: tool.bg }]}>
-                <ToolIcon tool={tool} />
+              <View>
+                <View style={[styles.toolIconBox, { backgroundColor: tool.bg, borderWidth: tool.hot ? 2 : 0, borderColor: "#f59e0b" }]}>
+                  <ToolIcon tool={tool} />
+                </View>
+                {tool.hot ? (
+                  <View style={styles.hotDot}>
+                    <Text style={{ fontSize: 7, color: "#fff", fontWeight: "700" }}>🔥</Text>
+                  </View>
+                ) : null}
               </View>
               <Text style={[styles.toolName, { color: colors.foreground }]} numberOfLines={2}>
                 {tool.label}
@@ -380,7 +396,7 @@ export default function HomeScreen() {
           {quickLinks.map((link) => (
             <Pressable
               key={link.id}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(link.url); }}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); WebBrowser.openBrowserAsync(link.url); }}
               style={({ pressed }) => [
                 styles.quickCard,
                 { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
@@ -557,6 +573,12 @@ const styles = StyleSheet.create({
   featEmoji: { fontSize: 28 },
   featLabel: { fontSize: 15, fontFamily: "Inter_700Bold", color: "#fff" },
   featSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#ffffff99" },
+  featBadge: {
+    position: "absolute", top: 10, right: 10,
+    backgroundColor: "rgba(255,255,255,0.25)", borderRadius: 20,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  featBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff" },
 
   // All Tools grid (4-col)
   toolsGrid: {
@@ -568,6 +590,11 @@ const styles = StyleSheet.create({
   },
   toolIconBox: { width: 46, height: 46, borderRadius: 13, alignItems: "center", justifyContent: "center" },
   toolName: { fontSize: 10, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 14 },
+  hotDot: {
+    position: "absolute", top: -4, right: -4,
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: "#f59e0b", alignItems: "center", justifyContent: "center",
+  },
 
   // Quick links
   quickRow: { flexDirection: "row", gap: 8 },
