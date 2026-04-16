@@ -71,7 +71,7 @@ jobs:
       - name: Upload AAB to GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: ZenSpace-v13-release-AAB
+          name: ZenSpace-v16-release-AAB
           path: artifacts/fittrack/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
           if-no-files-found: error
