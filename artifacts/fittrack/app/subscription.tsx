@@ -97,6 +97,27 @@ export default function SubscriptionScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
+  const FALLBACK_PLANS: Plan[] = [
+    {
+      id: "monthly", name: "Monthly", price: 49, priceLabel: "₹49/month",
+      durationLabel: "1 Month", credits: 500, creditsPerMonth: 500,
+      savings: null, badge: null, popular: false, color: "#6366f1",
+      features: ["500 AI credits", "No ads", "All tools unlocked"],
+    },
+    {
+      id: "quarterly", name: "3 Months", price: 121, priceLabel: "₹121 for 3 months",
+      durationLabel: "3 Months", credits: 1500, creditsPerMonth: 500,
+      savings: "Save 17%", badge: "⭐ Popular", popular: true, color: "#8b5cf6",
+      features: ["1500 AI credits", "No ads", "All tools", "Voice AI Mode"],
+    },
+    {
+      id: "yearly", name: "Yearly", price: 399, priceLabel: "₹399/year",
+      durationLabel: "12 Months", credits: 6000, creditsPerMonth: 500,
+      savings: "Save 32%", badge: "🔥 Best Value", popular: false, color: "#f59e0b",
+      features: ["6000 AI credits", "No ads", "Priority support", "All features"],
+    },
+  ];
+
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
@@ -110,8 +131,14 @@ export default function SubscriptionScreen() {
     try {
       const res = await fetch(`${BASE_URL}/subscription/plans`);
       const data = await res.json();
-      setPlans(data.plans);
-    } catch {}
+      if (data.plans && data.plans.length > 0) {
+        setPlans(data.plans);
+      } else {
+        setPlans(FALLBACK_PLANS);
+      }
+    } catch {
+      setPlans(FALLBACK_PLANS);
+    }
     setLoading(false);
   }
 
@@ -166,7 +193,12 @@ export default function SubscriptionScreen() {
         setRazorpayOrder(data);
         setShowWebView(true);
       } else {
-        Alert.alert("Error", data.error ?? "Failed to initiate payment");
+        Alert.alert(
+          "Payment Error",
+          data.details === "Authentication failed"
+            ? "Payment gateway setup is in progress. Please try again later or contact support."
+            : data.error ?? "Failed to initiate payment"
+        );
       }
     } catch {
       Alert.alert("Error", "Network error. Please try again.");
