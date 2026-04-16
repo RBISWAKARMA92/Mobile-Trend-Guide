@@ -7,8 +7,8 @@ import { verifyToken } from "../lib/jwt";
 const router = Router();
 
 const razorpay = new Razorpay({
-  key_id: process.env["RAZORPAY_KEY_ID"] ?? "",
-  key_secret: process.env["RAZORPAY_KEY_SECRET"] ?? "",
+  key_id: (process.env["RAZORPAY_KEY_ID"] ?? "").trim(),
+  key_secret: (process.env["RAZORPAY_KEY_SECRET"] ?? "").trim(),
 });
 
 const PLANS = [
@@ -134,7 +134,13 @@ router.post("/subscription/create-order", async (req, res) => {
       priceLabel: plan.priceLabel,
     });
   } catch (err: any) {
-    return res.status(500).json({ error: "Failed to create order", details: err?.message });
+    const rzErr = err?.error ?? err;
+    console.error("Razorpay order error:", JSON.stringify(rzErr));
+    return res.status(500).json({
+      error: "Failed to create order",
+      details: rzErr?.description ?? rzErr?.message ?? String(err),
+      code: rzErr?.code,
+    });
   }
 });
 
