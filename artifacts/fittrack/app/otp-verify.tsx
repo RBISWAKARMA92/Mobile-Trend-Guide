@@ -15,8 +15,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
-
 import { getApiBase } from "@/constants/api";
+
 const BASE_URL = getApiBase();
 const OTP_LENGTH = 6;
 
@@ -25,13 +25,14 @@ export default function OtpVerifyScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { login } = useAuth();
-  const { phone, otp: receivedOtp } = useLocalSearchParams<{ phone: string; otp: string }>();
+  const { email, otp: receivedOtp } = useLocalSearchParams<{ email: string; otp: string }>();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resendTimer, setResendTimer] = useState(30);
+  const [resendLoading, setResendLoading] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [success, setSuccess] = useState(false);
   const refs = Array.from({ length: OTP_LENGTH }, () => useRef<TextInput>(null));
@@ -71,7 +72,7 @@ export default function OtpVerifyScreen() {
       const res = await fetch(`${BASE_URL}/auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp: code }),
+        body: JSON.stringify({ email, otp: code }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -87,7 +88,7 @@ export default function OtpVerifyScreen() {
           }
         }, 1800);
       } else {
-        setError(data.error ?? "Invalid OTP");
+        setError(data.error ?? "Invalid OTP. Please try again.");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setOtp(["", "", "", "", "", ""]);
         refs[0].current?.focus();
@@ -96,6 +97,30 @@ export default function OtpVerifyScreen() {
       setError("Network error. Please try again.");
     }
     setLoading(false);
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${BASE_URL}/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setResendTimer(30);
+        setOtp(["", "", "", "", "", ""]);
+        refs[0].current?.focus();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        const data = await res.json();
+        setError(data.error ?? "Failed to resend OTP");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    }
+    setResendLoading(false);
   }
 
   return (
@@ -118,15 +143,16 @@ export default function OtpVerifyScreen() {
           </View>
         ) : (
           <>
-            <View style={[styles.phoneIcon, { backgroundColor: colors.primary + "15" }]}>
-              <Ionicons name="shield-checkmark-outline" size={48} color={colors.primary} />
+            <View style={[styles.emailIcon, { backgroundColor: colors.primary + "15" }]}>
+              <Ionicons name="mail-unread-outline" size={48} color={colors.primary} />
             </View>
-            <Text style={[styles.title, { color: colors.foreground }]}>Enter OTP</Text>
-            <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-              Sent to {phone}
-            </Text>
 
-            {/* Demo OTP display */}
+            <Text style={[styles.title, { color: colors.foreground }]}>Check your email</Text>
+            <Text style={[styles.sub, { color: colors.mutedForeground }]}>
+              We sent a 6-digit OTP to
+            </Text>
+            <Text style={[styles.emailText, { color: colors.primary }]}>{email}</Text>
+
             {receivedOtp ? (
               <View style={[styles.demoBadge, { backgroundColor: "#f59e0b20", borderColor: "#f59e0b40" }]}>
                 <Ionicons name="information-circle" size={16} color="#f59e0b" />
@@ -136,7 +162,6 @@ export default function OtpVerifyScreen() {
               </View>
             ) : null}
 
-            {/* OTP boxes */}
             <View style={styles.otpRow}>
               {otp.map((digit, idx) => (
                 <TextInput
@@ -146,7 +171,7 @@ export default function OtpVerifyScreen() {
                     styles.otpBox,
                     {
                       backgroundColor: colors.card,
-                      borderColor: digit ? colors.primary : colors.border,
+                      borderColor: error ? "#ef4444" : digit ? colors.primary : colors.border,
                       color: colors.foreground,
                     },
                   ]}
@@ -161,7 +186,12 @@ export default function OtpVerifyScreen() {
               ))}
             </View>
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <View style={styles.errorRow}>
+                <Ionicons name="alert-circle-outline" size={15} color="#ef4444" />
+                <Text style={styles.error}>{error}</Text>
+              </View>
+            ) : null}
 
             <Pressable
               onPress={() => verifyOtp(otp.join(""))}
@@ -177,15 +207,29 @@ export default function OtpVerifyScreen() {
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Verify OTP</Text>}
             </Pressable>
 
-            <Pressable
-              onPress={() => router.back()}
-              disabled={resendTimer > 0}
-              style={styles.resendBtn}
-            >
-              <Text style={[styles.resendText, { color: resendTimer > 0 ? colors.mutedForeground : colors.primary }]}>
-                {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Change number"}
-              </Text>
-            </Pressable>
+            <View style={styles.resendRow}>
+              {resendTimer > 0 ? (
+                <Text style={[styles.resendText, { color: colors.mutedForeground }]}>
+                  Resend OTP in {resendTimer}s
+                </Text>
+              ) : (
+                <Pressable onPress={handleResend} disabled={resendLoading}>
+                  {resendLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={[styles.resendLink, { color: colors.primary }]}>
+                      Resend OTP
+                    </Text>
+                  )}
+                </Pressable>
+              )}
+              <Text style={[styles.dot, { color: colors.mutedForeground }]}> · </Text>
+              <Pressable onPress={() => router.back()}>
+                <Text style={[styles.resendLink, { color: colors.mutedForeground }]}>
+                  Change email
+                </Text>
+              </Pressable>
+            </View>
           </>
         )}
       </View>
@@ -195,22 +239,26 @@ export default function OtpVerifyScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 24, gap: 20, alignItems: "center" },
-  phoneIcon: { width: 90, height: 90, borderRadius: 45, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 26, fontFamily: "Inter_700Bold" },
-  sub: { fontSize: 15, fontFamily: "Inter_400Regular" },
+  content: { flex: 1, paddingHorizontal: 24, gap: 16, alignItems: "center" },
+  emailIcon: { width: 90, height: 90, borderRadius: 45, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 26, fontFamily: "Inter_700Bold", textAlign: "center" },
+  sub: { fontSize: 15, fontFamily: "Inter_400Regular", textAlign: "center" },
+  emailText: { fontSize: 15, fontFamily: "Inter_700Bold", textAlign: "center" },
   demoBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
   demoText: { fontSize: 14, fontFamily: "Inter_700Bold", letterSpacing: 2 },
-  otpRow: { flexDirection: "row", gap: 10 },
+  otpRow: { flexDirection: "row", gap: 10, marginTop: 8 },
   otpBox: {
     width: 46, height: 56, borderRadius: 12, borderWidth: 2,
     fontSize: 22, fontFamily: "Inter_700Bold",
   },
+  errorRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   error: { color: "#ef4444", fontSize: 13, fontFamily: "Inter_400Regular" },
   btn: { width: "100%", height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   btnText: { color: "#fff", fontSize: 17, fontFamily: "Inter_700Bold" },
-  resendBtn: { paddingVertical: 8 },
-  resendText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  resendRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  resendText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  resendLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  dot: { fontSize: 14 },
   successBox: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   successIcon: { width: 110, height: 110, borderRadius: 55, alignItems: "center", justifyContent: "center" },
   successTitle: { fontSize: 28, fontFamily: "Inter_700Bold" },
