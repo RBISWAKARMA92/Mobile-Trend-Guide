@@ -3,6 +3,7 @@ import { Audio } from "expo-av";
 import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
+import { getApiBase } from "@/constants/api";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -31,7 +32,7 @@ const YT_AD_BONUS = 5;
 const YT_MAX_AD_UNLOCKS = 3;
 const YT_STORAGE_KEY = "yt_search_quota";
 
-const API_BASE = `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+const API_BASE = getApiBase();
 
 type Station = { id: string; name: string; genre: string; url: string; emoji: string; color: string };
 type LocalTrack = { id: string; name: string; uri: string; size?: number };
