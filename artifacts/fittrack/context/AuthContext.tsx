@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getApiBase } from "@/constants/api";
 
-const BASE_URL = `${getApiBase()}/api`;
+const BASE_URL = getApiBase();
 
 export type User = {
   id: number;
