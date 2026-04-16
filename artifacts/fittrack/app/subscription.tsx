@@ -47,7 +47,7 @@ type RazorpayOrder = {
   priceLabel: string;
 };
 
-function buildRazorpayHTML(order: RazorpayOrder, phone: string) {
+function buildRazorpayHTML(order: RazorpayOrder, email: string) {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -63,7 +63,7 @@ var options = {
   name: "ZenSpace",
   description: "${order.planName} – ${order.priceLabel}",
   order_id: "${order.orderId}",
-  prefill: { contact: "${phone}" },
+  prefill: { email: "${email}" },
   theme: { color: "#6366f1" },
   handler: function(response) {
     window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -225,7 +225,7 @@ export default function SubscriptionScreen() {
           </View>
           {razorpayOrder && (
             <WebView
-              source={{ html: buildRazorpayHTML(razorpayOrder, user?.phone ?? "") }}
+              source={{ html: buildRazorpayHTML(razorpayOrder, user?.email ?? "") }}
               onMessage={handleWebViewMessage}
               javaScriptEnabled
               domStorageEnabled
