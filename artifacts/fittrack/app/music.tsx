@@ -154,7 +154,7 @@ export default function MusicScreen() {
       const r = await fetch(`${API_BASE}/spotify/featured`);
       const data = await r.json();
       if (data.tracks) setSpotifyResults(data.tracks);
-      else setSpotifyError("Could not load tracks");
+      else setSpotifyError("Spotify temporarily unavailable. Try YouTube tab!");
     } catch {
       setSpotifyError("Network error. Check connection.");
     } finally {
@@ -452,13 +452,22 @@ export default function MusicScreen() {
 
             {spotifyError && !spotifyLoading && (
               <View style={styles.spotifyCenter}>
-                <Ionicons name="warning-outline" size={36} color="#ef4444" />
-                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground }]}>{spotifyError}</Text>
+                <Ionicons name="musical-notes-outline" size={48} color="#1DB954" />
+                <Text style={[styles.spotifyCenterText, { color: colors.foreground, fontWeight: "700", fontSize: 16 }]}>
+                  Spotify Unavailable
+                </Text>
+                <Text style={[styles.spotifyCenterText, { color: colors.mutedForeground, fontSize: 13, marginTop: 4 }]}>
+                  Spotify service is temporarily down.{"\n"}YouTube Music is working perfectly!
+                </Text>
                 <Pressable
-                  onPress={fetchFeatured}
-                  style={[styles.spotifyRetry, { backgroundColor: "#1DB954" }]}
+                  onPress={() => setTab("YouTube")}
+                  style={[styles.spotifyRetry, { backgroundColor: "#FF0000", marginTop: 16 }]}
                 >
-                  <Text style={styles.spotifyRetryText}>Try Again</Text>
+                  <Ionicons name="logo-youtube" size={16} color="#fff" style={{ marginRight: 6 }} />
+                  <Text style={styles.spotifyRetryText}>Switch to YouTube</Text>
+                </Pressable>
+                <Pressable onPress={fetchFeatured} style={{ marginTop: 10 }}>
+                  <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>Retry Spotify</Text>
                 </Pressable>
               </View>
             )}
