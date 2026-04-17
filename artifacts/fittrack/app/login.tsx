@@ -15,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/constants/api";
+import { useAuth } from "@/context/AuthContext";
 
 const BASE_URL = getApiBase();
 
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { login } = useAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
@@ -33,7 +35,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSendOTP() {
+  async function handleEmailLogin() {
     const trimmed = email.trim().toLowerCase();
     if (!isValidEmail(trimmed)) {
       setError("Please enter a valid email address");
@@ -43,20 +45,29 @@ export default function LoginScreen() {
     setLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      const res = await fetch(`${BASE_URL}/auth/send-otp`, {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch(`${BASE_URL}/auth/email-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: trimmed }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
-      if (res.ok) {
-        router.push({ pathname: "/otp-verify", params: { email: trimmed, otp: data.otp ?? "" } });
+      if (res.ok && data.token) {
+        await login(data.token);
+        router.replace("/");
       } else {
-        setError(data.error ?? "Failed to send OTP");
+        setError(data.error ?? "Login failed. Please try again.");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(`Connection failed: ${msg}`);
+      if (err instanceof Error && err.name === "AbortError") {
+        setError("Request timed out. Please check your internet connection.");
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        setError(`Connection failed: ${msg}`);
+      }
     }
     setLoading(false);
   }
@@ -88,8 +99,8 @@ export default function LoginScreen() {
             autoComplete="email"
             value={email}
             onChangeText={(v) => { setEmail(v); setError(""); }}
-            returnKeyType="send"
-            onSubmitEditing={handleSendOTP}
+            returnKeyType="go"
+            onSubmitEditing={handleEmailLogin}
           />
           {isValidEmail(email) && (
             <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
@@ -109,7 +120,7 @@ export default function LoginScreen() {
         </View>
 
         <Pressable
-          onPress={handleSendOTP}
+          onPress={handleEmailLogin}
           disabled={loading || !isValidEmail(email)}
           style={({ pressed }) => [
             styles.btn,
@@ -123,7 +134,7 @@ export default function LoginScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <Text style={styles.btnText}>Send OTP</Text>
+              <Text style={styles.btnText}>Continue →</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
             </>
           )}
